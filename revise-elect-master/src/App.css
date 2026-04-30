@@ -1,0 +1,44 @@
+.App {
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* Each page manages its own navbar offset via their own CSS */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #f0f0f0;
+  /* Light base — paws sit above this via z-index */
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Page content wrapper — sits above paw background (z-index: 0) */
+.page-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+/* Remove default link styles */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Button focus styles */
+button:focus {
+  outline: 2px solid #111111;
+  outline-offset: 2px;
+}
+
+/* Input focus styles */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #111111;
+  outline-offset: 2px;
+}
