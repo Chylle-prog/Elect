@@ -296,7 +296,7 @@ const Profile = () => {
           <p>Manage your grooming appointments here</p>
           <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '0.9rem', color: '#64748b' }}>You are currently</span>
-            <span style={{ 
+            <span style={{
               backgroundColor: userStats.codeUsed >= 2 ? '#fef3c7' : userStats.codeUsed === 1 ? '#f1f5f9' : '#fff7ed',
               color: userStats.codeUsed >= 2 ? '#92400e' : userStats.codeUsed === 1 ? '#475569' : '#9a3412',
               padding: '4px 12px',
@@ -417,8 +417,8 @@ const Profile = () => {
                         </span>
                         <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#166534', letterSpacing: '2px' }}>{userStats.rewardCode}</span>
                         <p style={{ fontSize: '0.75rem', color: '#15803d', margin: '0.5rem 0 0' }}>
-                          Use this code at checkout to get 
-                          <strong> {userStats.codeUsed >= 2 ? "100% (FREE)" : userStats.codeUsed === 1 ? "30%" : "10%"} OFF </strong> 
+                          Use this code at checkout to get
+                          <strong> {userStats.codeUsed >= 2 ? "100% (FREE)" : userStats.codeUsed === 1 ? "30%" : "10%"} OFF </strong>
                           your most expensive pet service!
                         </p>
                       </div>

@@ -751,7 +751,7 @@ const Dashboard = () => {
     const renderBookings = () => {
         // Step 1: Group by Customer
         const customerMap = {};
-        
+
         filteredBookings.forEach(booking => {
             const cid = booking.customerId || (booking.clientName || "").trim().toLowerCase();
             if (!customerMap[cid]) {
@@ -760,7 +760,7 @@ const Dashboard = () => {
                     sessions: {} // Will hold bookings grouped by booking_id
                 };
             }
-            
+
             // Step 2: Group that customer's pets by booking_id (session)
             const bid = booking.id; // This is the booking_id from the backend
             if (!customerMap[cid].sessions[bid]) {
@@ -773,7 +773,7 @@ const Dashboard = () => {
                     pets: []
                 };
             }
-            
+
             const sessionPets = booking.pets || [{
                 id: booking.id, // pet_id fallback
                 petName: booking.petName,
@@ -786,7 +786,7 @@ const Dashboard = () => {
                 price: booking.price,
                 status: booking.status
             }];
-            
+
             sessionPets.forEach(p => {
                 if (!customerMap[cid].sessions[bid].pets.find(existing => existing.id === p.id)) {
                     customerMap[cid].sessions[bid].pets.push(p);
@@ -1176,8 +1176,8 @@ const Dashboard = () => {
                                                             </select>
                                                         </td>
                                                         <td>
-                                                            <button 
-                                                                className="btn-primary" 
+                                                            <button
+                                                                className="btn-primary"
                                                                 style={{ padding: '4px 12px', fontSize: '0.8rem' }}
                                                                 onClick={() => openPetDetails(session)}
                                                             >
@@ -1213,25 +1213,25 @@ const Dashboard = () => {
                             <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#334155' }}>🐾 Pet Information</h4>
                             <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
                                 {(selectedPet.pets || []).map((p, i) => (
-                                    <div key={i} style={{ 
-                                        minWidth: '400px', 
-                                        background: 'white', 
-                                        borderRadius: '16px', 
-                                        padding: '1.2rem', 
+                                    <div key={i} style={{
+                                        minWidth: '400px',
+                                        background: 'white',
+                                        borderRadius: '16px',
+                                        padding: '1.2rem',
                                         boxShadow: '0 2px 4px rgb(0 0 0 / 0.05)',
                                         border: '1px solid #e2e8f0'
                                     }}>
-                                        <h5 style={{ 
-                                            color: i === 0 ? '#f59e0b' : '#10b981', 
-                                            marginBottom: '1rem', 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
+                                        <h5 style={{
+                                            color: i === 0 ? '#f59e0b' : '#10b981',
+                                            marginBottom: '1rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
                                             gap: '0.5rem',
                                             fontSize: '1rem'
                                         }}>
                                             {i === 0 ? '🐶 First Pet Information' : i === 1 ? '🐱 Second Pet Details' : `🐾 Pet ${i + 1} Details`}
                                         </h5>
-                                        
+
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 1.5rem' }}>
                                             <div className="pet-field" style={{ padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
                                                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Pet Name:</span>
@@ -1265,14 +1265,14 @@ const Dashboard = () => {
                                     </div>
                                 ))}
                             </div>
-                            
+
                             <div className="special-requests-section" style={{ marginTop: '1.2rem' }}>
                                 <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem', color: '#334155', fontSize: '1rem' }}>📝 Special Requests</h4>
-                                <div style={{ 
-                                    background: '#fffbeb', 
-                                    padding: '1rem', 
-                                    borderRadius: '12px', 
-                                    border: '1px solid #fef3c7', 
+                                <div style={{
+                                    background: '#fffbeb',
+                                    padding: '1rem',
+                                    borderRadius: '12px',
+                                    border: '1px solid #fef3c7',
                                     color: '#92400e',
                                     fontSize: '0.9rem',
                                     lineHeight: '1.5'
@@ -1286,7 +1286,7 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
-            )}}
+            )}
         </div>
     );
 };

@@ -37,7 +37,12 @@ const Reviews = () => {
     try {
       const response = await fetch('http://127.0.0.1:5000/api/reviews');
       const data = await response.json();
-      setReviews(data);
+      if (Array.isArray(data)) {
+        setReviews(data);
+      } else {
+        console.error('Expected array from /api/reviews but got:', data);
+        setReviews([]);
+      }
     } catch (error) {
       console.error('Error fetching reviews:', error);
     } finally {
@@ -54,7 +59,12 @@ const Reviews = () => {
     try {
       const response = await fetch(`http://127.0.0.1:5000/api/customers/${customerId}/pets`);
       const data = await response.json();
-      setUserPets(data);
+      if (Array.isArray(data)) {
+        setUserPets(data);
+      } else {
+        console.error('Expected array for pets but got:', data);
+        setUserPets([]);
+      }
     } catch (error) {
       console.error('Error fetching user pets:', error);
     }
@@ -105,9 +115,10 @@ const Reviews = () => {
     );
   };
 
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
   const filteredReviews = filterRating === 0
-    ? reviews
-    : reviews.filter(review => review.rating === filterRating);
+    ? safeReviews
+    : safeReviews.filter(review => review.rating === filterRating);
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -250,9 +261,11 @@ const Reviews = () => {
       // First, make sure we have the latest pet list
       const response = await fetch(`http://127.0.0.1:5000/api/customers/${currentUser.id}/pets`);
       const pets = await response.json();
-      setUserPets(pets);
       
-      if (pets.length === 0) {
+      const safePets = Array.isArray(pets) ? pets : [];
+      setUserPets(safePets);
+      
+      if (safePets.length === 0) {
         alert('You can only leave a review after your pet has a COMPLETED service. Please wait for your booking to be marked as completed by the admin.');
         return;
       }
@@ -358,7 +371,8 @@ const Reviews = () => {
                           name="petId"
                           value={newReview.petId}
                           onChange={(e) => {
-                            const pet = userPets.find(p => p.pet_id === parseInt(e.target.value));
+                            const safePets = Array.isArray(userPets) ? userPets : [];
+                            const pet = safePets.find(p => p.pet_id === parseInt(e.target.value));
                             if (pet) {
                               setNewReview(prev => ({ 
                                 ...prev, 
@@ -372,7 +386,7 @@ const Reviews = () => {
                           style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                         >
                           <option value="">-- Choose a Pet --</option>
-                          {userPets.map(pet => (
+                          {Array.isArray(userPets) && userPets.map(pet => (
                             <option key={pet.pet_id} value={pet.pet_id}>
                               {pet.pet_name} ({pet.breed})
                             </option>
