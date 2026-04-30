@@ -84,12 +84,15 @@ const Profile = () => {
         const res = await fetch(`http://127.0.0.1:5000/api/customers/${currentUser.id}`);
         if (res.ok) {
           const data = await res.json();
-          setUserStats(prev => ({
-            ...prev,
-            rewardPoints: data.rewardPoints || 0,
-            rewardCode: data.rewardCode || null,
-            codeUsed: data.codeUsed || 0
-          }));
+          // Ensure data is valid before setting state
+          if (data && typeof data === 'object' && !data.error) {
+            setUserStats(prev => ({
+              ...prev,
+              rewardPoints: data.rewardPoints || 0,
+              rewardCode: data.rewardCode || null,
+              codeUsed: data.codeUsed || 0
+            }));
+          }
         }
       } catch (err) {
         console.error("Failed to fetch rewards:", err);
@@ -146,6 +149,13 @@ const Profile = () => {
       try {
         const response = await fetch('http://127.0.0.1:5000/api/bookings');
         const allBookings = await response.json();
+
+        // Safety check: Ensure allBookings is an array
+        if (!Array.isArray(allBookings)) {
+          console.error("Expected array from /api/bookings but got:", allBookings);
+          setBookings([]);
+          return;
+        }
 
         // Filter bookings by current user's name
         const clientName = currentUser.fullName || currentUser.name;
@@ -284,6 +294,20 @@ const Profile = () => {
         <div className="welcome-section">
           <h1>👋 Welcome back, {userStats.firstName}!</h1>
           <p>Manage your grooming appointments here</p>
+          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.9rem', color: '#64748b' }}>You are currently</span>
+            <span style={{ 
+              backgroundColor: userStats.codeUsed >= 2 ? '#fef3c7' : userStats.codeUsed === 1 ? '#f1f5f9' : '#fff7ed',
+              color: userStats.codeUsed >= 2 ? '#92400e' : userStats.codeUsed === 1 ? '#475569' : '#9a3412',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              fontSize: '0.85rem',
+              fontWeight: 'bold',
+              border: `1px solid ${userStats.codeUsed >= 2 ? '#fde68a' : userStats.codeUsed === 1 ? '#e2e8f0' : '#ffedd5'}`
+            }}>
+              {userStats.codeUsed >= 2 ? "🥇 Gold" : userStats.codeUsed === 1 ? "🥈 Silver" : "🥉 Bronze"} Tier
+            </span>
+          </div>
         </div>
         <div className="quick-actions">
           <button className="primary-action-btn" onClick={handleBooking}>
