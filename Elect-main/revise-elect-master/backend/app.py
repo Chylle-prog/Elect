@@ -320,6 +320,36 @@ def handle_bookings():
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (cust_id, booking_id, p.get('petName'), p.get('species', 'Dog'), p.get('breed'), p.get('petSize'), p.get('petAge'), p.get('petAgeUnit'), p['service_id'], final_price))
 
+        # Email notification for new booking
+        try:
+            pet_details = ""
+            for i, p in enumerate(processed_pets):
+                p_price = p['price']
+                if applied_discount and i == max_idx:
+                    reduction = (p_price * discount_percent) // 100
+                    p_price = p_price - reduction
+                pet_details += f"  Pet {i+1}: {p.get('petName', 'N/A')} | Breed: {p.get('breed', 'N/A')} | " \
+                               f"Size: {p.get('petSize', 'N/A')} | Service: {p.get('service', 'N/A')} | " \
+                               f"Price: ₱{p_price}\n"
+
+            subject = f"New Booking #{booking_id} Received"
+            body = f"A new booking has been submitted.\n\n" \
+                   f"Booking ID: {booking_id}\n" \
+                   f"Customer: {first_name} {last_name}\n" \
+                   f"Email: {email or 'N/A'}\n" \
+                   f"Phone: {data.get('phone', 'N/A')}\n" \
+                   f"Date: {data.get('date')}\n" \
+                   f"Time: {data.get('time')}\n" \
+                   f"Status: {data.get('status', 'pending')}\n\n" \
+                   f"--- Pet & Service Details ---\n" \
+                   f"{pet_details}\n" \
+                   f"Special Requests: {data.get('specialRequests', 'None')}\n"
+            if applied_discount:
+                body += f"Promo Code Applied: {promo_code} ({discount_percent}% discount)\n"
+            send_email(subject, body)
+        except Exception as e:
+            sys.stderr.write(f"BOOKING EMAIL ERROR: {e}\n")
+
         return jsonify({"success": True, "message": "Booking created with pets", "bookingId": booking_id, "discountApplied": applied_discount})
 
     # GET: Fetch all bookings and group their pets
