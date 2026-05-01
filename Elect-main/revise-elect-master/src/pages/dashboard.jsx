@@ -35,7 +35,7 @@ const Dashboard = () => {
 
     // UI States
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [showCustomerModal, setShowCustomerModal] = useState(false);
     const [modalContext, setModalContext] = useState('');
@@ -48,6 +48,46 @@ const Dashboard = () => {
     const [selectedPet, setSelectedPet] = useState(null);
     const [showPetModal, setShowPetModal] = useState(false);
     const [breedFilter, setBreedFilter] = useState('all');
+
+    const DOG_BREEDS_LIST = [
+        "Golden Retriever", "Labrador Retriever", "Cavalier King Charles Spaniel", "Shih Tzu", "Maltese",
+        "Bichon Frise", "Pomeranian", "Samoyed", "Bernese Mountain Dog", "Newfoundland",
+        "Cocker Spaniel", "Havanese", "Collie", "Shetland Sheepdog", "Great Pyrenees",
+        "Goldendoodle", "Labradoodle", "Yorkshire Terrier", "Lhasa Apso", "Afghan Hound",
+        "Old English Sheepdog", "Portuguese Water Dog", "Schnauzer", "Chow Chow", "Beagle",
+        "Boxer", "Basset Hound", "Saint Bernard", "Greyhound", "Whippet", "Pug",
+        "French Bulldog", "Boston Terrier", "Irish Setter", "Husky", "Japanese Akita",
+        "Belgian Malinois", "German Shepherd", "Rottweiler", "Alaskan Malamute", "St. Bernard",
+        "Standard Poodle", "Giant Poodle", "Aspin", "Mixed Breed", "Other"
+    ];
+
+    const CAT_BREEDS_LIST = [
+        "Persian", "Ragdoll", "Maine Coon", "British Shorthair", "Scottish Fold",
+        "Birman", "Siamese", "Burmese", "Russian Blue", "Himalayan", "Sphynx",
+        "American Shorthair", "Exotic Shorthair", "Norwegian Forest Cat", "Siberian",
+        "Tonkinese", "Ragamuffin", "Abyssinian", "Turkish Angora", "Devon Rex",
+        "Cornish Rex", "Oriental Shorthair", "Selkirk Rex", "Manx", "Balinese",
+        "Puspin", "Mixed Breed", "Other"
+    ];
+
+    const getSpeciesByBreed = (p) => {
+        if (!p) return 'Dog';
+        // If species is explicitly set and not 'dog' (since it might be default), trust it
+        if (p.species && p.species.toLowerCase() === 'cat') return 'Cat';
+        
+        const breed = (p.breed || '').trim().toLowerCase();
+        if (!breed) return 'Dog';
+
+        // Check against known cat breeds first (more specific)
+        const isKnownCat = CAT_BREEDS_LIST.some(b => 
+            b.toLowerCase() !== 'mixed breed' && 
+            b.toLowerCase() !== 'other' && 
+            b.toLowerCase() === breed
+        );
+        if (isKnownCat || breed === 'puspin') return 'Cat';
+        
+        return 'Dog';
+    };
 
     const fetchData = useCallback(async () => {
         try {
@@ -155,8 +195,8 @@ const Dashboard = () => {
                 <thead><tr><th>Client</th><th>Pet</th><th>Service</th><th>Date</th><th>Status</th><th>Price</th></tr></thead>
                 <tbody>
                     ${reportData.bookings.flatMap(b => {
-                        if (b.pets && b.pets.length > 0) {
-                            return b.pets.map(p => `
+            if (b.pets && b.pets.length > 0) {
+                return b.pets.map(p => `
                                 <tr>
                                     <td>${b.clientName}</td>
                                     <td>${p.petName}</td>
@@ -166,8 +206,8 @@ const Dashboard = () => {
                                     <td>₱${(p.price || 0).toLocaleString()}</td>
                                 </tr>
                             `);
-                        }
-                        return `
+            }
+            return `
                             <tr>
                                 <td>${b.clientName}</td>
                                 <td>${b.petName || 'N/A'}</td>
@@ -177,7 +217,7 @@ const Dashboard = () => {
                                 <td>₱${(b.totalPrice || 0).toLocaleString()}</td>
                             </tr>
                         `;
-                    }).join('')}
+        }).join('')}
                 </tbody>
             </table>
           </div>
@@ -351,15 +391,15 @@ const Dashboard = () => {
     };
 
     const filteredBookings = bookings.filter(booking => {
-        const matchesSearch = 
+        const matchesSearch =
             booking.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (booking.pets && booking.pets.some(p => 
+            (booking.pets && booking.pets.some(p =>
                 p.petName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 p.service?.toLowerCase().includes(searchTerm.toLowerCase())
             ));
-        
+
         const matchesDate = !selectedDate || booking.date === selectedDate;
-        
+
         return matchesSearch && matchesDate;
     });
 
@@ -417,8 +457,9 @@ const Dashboard = () => {
                                     let dogs = 0;
                                     let cats = 0;
                                     bookings.forEach(b => {
-                                        (b.pets || [{ species: b.species }]).forEach(p => {
-                                            if ((p.species || '').toLowerCase() === 'cat') cats++;
+                                        const pets = b.pets || [{ species: b.species, breed: b.breed }];
+                                        pets.forEach(p => {
+                                            if (getSpeciesByBreed(p) === 'Cat') cats++;
                                             else dogs++;
                                         });
                                     });
@@ -499,23 +540,8 @@ const Dashboard = () => {
                                     <h3 className="bottom-card-title">🐕 Breed Distribution (Top Breeds)</h3>
                                 </div>
                                 {(() => {
-                                    const displayBreeds = [
-                                        "Golden Retriever", "Labrador Retriever", "Cavalier King Charles Spaniel", "Shih Tzu", "Maltese",
-                                        "Bichon Frise", "Pomeranian", "Samoyed", "Bernese Mountain Dog", "Newfoundland",
-                                        "Cocker Spaniel", "Havanese", "Collie", "Shetland Sheepdog", "Great Pyrenees",
-                                        "Goldendoodle", "Labradoodle", "Yorkshire Terrier", "Lhasa Apso", "Afghan Hound",
-                                        "Old English Sheepdog", "Portuguese Water Dog", "Schnauzer", "Chow Chow", "Beagle",
-                                        "Boxer", "Basset Hound", "Saint Bernard", "Greyhound", "Whippet", "Pug",
-                                        "French Bulldog", "Boston Terrier", "Irish Setter", "Husky", "Japanese Akita",
-                                        "Belgian Malinois", "German Shepherd", "Rottweiler", "Alaskan Malamute", "St. Bernard",
-                                        "Standard Poodle", "Giant Poodle",
-                                        "Persian", "Ragdoll", "Maine Coon", "British Shorthair", "Scottish Fold",
-                                        "Birman", "Siamese", "Burmese", "Russian Blue", "Himalayan", "Sphynx",
-                                        "American Shorthair", "Exotic Shorthair", "Norwegian Forest Cat", "Siberian",
-                                        "Tonkinese", "Ragamuffin", "Abyssinian", "Turkish Angora", "Devon Rex",
-                                        "Cornish Rex", "Oriental Shorthair", "Selkirk Rex", "Manx", "Balinese"
-                                    ];
-                                    
+                                    const displayBreeds = [...DOG_BREEDS_LIST, ...CAT_BREEDS_LIST];
+
                                     const finalCounts = {};
                                     displayBreeds.forEach(breed => { finalCounts[breed] = 0; });
 
@@ -682,7 +708,7 @@ const Dashboard = () => {
                                         });
                                     });
                                     const total = dogs + cats || 1;
-                                    const dogP = Math.round(dogs/total*100);
+                                    const dogP = Math.round(dogs / total * 100);
                                     const catP = 100 - dogP;
                                     return (
                                         <>
@@ -739,7 +765,7 @@ const Dashboard = () => {
                                         );
                                     })}
                                 </tbody>
-                                </table>
+                            </table>
                         </div>
                     </div>
                 )}
@@ -750,28 +776,11 @@ const Dashboard = () => {
     const renderBreedsAnalytics = () => {
         const finalCounts = {};
 
-        const DOG_BREEDS = [
-            "Golden Retriever", "Labrador Retriever", "Cavalier King Charles Spaniel", "Shih Tzu", "Maltese",
-            "Bichon Frise", "Pomeranian", "Samoyed", "Bernese Mountain Dog", "Newfoundland",
-            "Cocker Spaniel", "Havanese", "Collie", "Shetland Sheepdog", "Great Pyrenees",
-            "Goldendoodle", "Labradoodle", "Yorkshire Terrier", "Lhasa Apso", "Afghan Hound",
-            "Old English Sheepdog", "Portuguese Water Dog", "Schnauzer", "Chow Chow", "Beagle",
-            "Boxer", "Basset Hound", "Saint Bernard", "Greyhound", "Whippet", "Pug",
-            "French Bulldog", "Boston Terrier", "Irish Setter", "Husky", "Japanese Akita",
-            "Belgian Malinois", "German Shepherd", "Rottweiler", "Alaskan Malamute", "St. Bernard",
-            "Standard Poodle", "Giant Poodle"
-        ];
-
-        const CAT_BREEDS = [
-            "Persian", "Ragdoll", "Maine Coon", "British Shorthair", "Scottish Fold",
-            "Birman", "Siamese", "Burmese", "Russian Blue", "Himalayan", "Sphynx",
-            "American Shorthair", "Exotic Shorthair", "Norwegian Forest Cat", "Siberian",
-            "Tonkinese", "Ragamuffin", "Abyssinian", "Turkish Angora", "Devon Rex",
-            "Cornish Rex", "Oriental Shorthair", "Selkirk Rex", "Manx", "Balinese"
-        ];
+        const DOG_BREEDS = DOG_BREEDS_LIST;
+        const CAT_BREEDS = CAT_BREEDS_LIST;
 
         const displayBreeds = breedFilter === 'dog' ? DOG_BREEDS : breedFilter === 'cat' ? CAT_BREEDS : [...DOG_BREEDS, ...CAT_BREEDS];
-        
+
         displayBreeds.forEach(breed => {
             finalCounts[breed] = 0;
         });
@@ -782,7 +791,8 @@ const Dashboard = () => {
             const pets = b.pets || [{ species: b.species, breed: b.breed, petName: b.petName }];
             pets.forEach(p => {
                 if (p.petName && p.breed) {
-                    const speciesMatch = breedFilter === 'all' || (p.species || '').toLowerCase() === breedFilter;
+                    const species = getSpeciesByBreed(p);
+                    const speciesMatch = breedFilter === 'all' || species.toLowerCase() === breedFilter;
                     if (speciesMatch) {
                         const petKey = `${b.clientName}-${p.petName}`.toLowerCase();
                         if (!uniquePets.has(petKey)) {
@@ -796,8 +806,8 @@ const Dashboard = () => {
         // Count occurrences of each breed from unique pets
         uniquePets.forEach((breed) => {
             const normalized = breed.trim().toLowerCase();
-            const matchingKey = displayBreeds.find(k => k.toLowerCase() === normalized) || 
-                               breed.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+            const matchingKey = displayBreeds.find(k => k.toLowerCase() === normalized) ||
+                breed.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
             finalCounts[matchingKey] = (finalCounts[matchingKey] || 0) + 1;
         });
 
@@ -813,21 +823,21 @@ const Dashboard = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
                     <div style={{ textAlign: 'center', width: '100%' }}>
                         <h2 style={{ background: 'var(--primary-yellow)', padding: '10px 24px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '0.8rem', color: '#1e293b', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                            🐕 Breed Distribution
+                            {breedFilter === 'dog' ? '🐕' : breedFilter === 'cat' ? '🐈' : '🐾'} {breedFilter === 'dog' ? 'Dog' : breedFilter === 'cat' ? 'Cat' : 'Overall'} Breed Distribution
                         </h2>
-                        <p style={{ marginTop: '0.5rem', color: '#64748b' }}>Complete overview of pet breeds population</p>
+                        <p style={{ marginTop: '0.5rem', color: '#64748b' }}>Complete overview of {breedFilter === 'all' ? 'all pet' : breedFilter} breeds population</p>
                     </div>
                 </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', background: '#f1f5f9', padding: '4px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                            <button onClick={() => setBreedFilter('all')} style={{ padding: '6px 16px', borderRadius: '8px', border: 'none', background: breedFilter === 'all' ? 'white' : 'transparent', color: breedFilter === 'all' ? 'var(--primary-yellow)' : '#64748b', fontWeight: 'bold', cursor: 'pointer', boxShadow: breedFilter === 'all' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}>All</button>
-                            <button onClick={() => setBreedFilter('dog')} style={{ padding: '6px 16px', borderRadius: '8px', border: 'none', background: breedFilter === 'dog' ? 'white' : 'transparent', color: breedFilter === 'dog' ? 'var(--primary-yellow)' : '#64748b', fontWeight: 'bold', cursor: 'pointer', boxShadow: breedFilter === 'dog' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}>Dogs</button>
-                            <button onClick={() => setBreedFilter('cat')} style={{ padding: '6px 16px', borderRadius: '8px', border: 'none', background: breedFilter === 'cat' ? 'white' : 'transparent', color: breedFilter === 'cat' ? 'var(--primary-yellow)' : '#64748b', fontWeight: 'bold', cursor: 'pointer', boxShadow: breedFilter === 'cat' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}>Cats</button>
-                        </div>
+                <div style={{ display: 'flex', gap: '0.5rem', background: '#f1f5f9', padding: '4px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                    <button onClick={() => setBreedFilter('all')} style={{ padding: '6px 16px', borderRadius: '8px', border: 'none', background: breedFilter === 'all' ? 'white' : 'transparent', color: breedFilter === 'all' ? 'var(--primary-yellow)' : '#64748b', fontWeight: 'bold', cursor: 'pointer', boxShadow: breedFilter === 'all' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}>All</button>
+                    <button onClick={() => setBreedFilter('dog')} style={{ padding: '6px 16px', borderRadius: '8px', border: 'none', background: breedFilter === 'dog' ? 'white' : 'transparent', color: breedFilter === 'dog' ? 'var(--primary-yellow)' : '#64748b', fontWeight: 'bold', cursor: 'pointer', boxShadow: breedFilter === 'dog' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}>Dogs</button>
+                    <button onClick={() => setBreedFilter('cat')} style={{ padding: '6px 16px', borderRadius: '8px', border: 'none', background: breedFilter === 'cat' ? 'white' : 'transparent', color: breedFilter === 'cat' ? 'var(--primary-yellow)' : '#64748b', fontWeight: 'bold', cursor: 'pointer', boxShadow: breedFilter === 'cat' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}>Cats</button>
+                </div>
 
-                <div className="breeds-barchart-container" style={{ 
-                    background: 'white', 
-                    padding: '2rem', 
-                    borderRadius: '16px', 
+                <div className="breeds-barchart-container" style={{
+                    background: 'white',
+                    padding: '2rem',
+                    borderRadius: '16px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
                     marginTop: '1rem',
                     maxHeight: '600px',
@@ -842,21 +852,21 @@ const Dashboard = () => {
                                         <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>{breed.name}</div>
                                     </div>
                                     <div className="bar-container" style={{ flex: 1, position: 'relative', height: '24px', background: '#f8fafc', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
-                                        <div className="bar-fill" style={{ 
-                                            width: `${percentage}%`, 
-                                            height: '100%', 
+                                        <div className="bar-fill" style={{
+                                            width: `${percentage}%`,
+                                            height: '100%',
                                             background: index % 3 === 0 ? 'var(--primary-yellow)' : index % 3 === 1 ? 'var(--secondary-blue)' : 'var(--accent-green)',
                                             transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
                                             borderRadius: '12px'
                                         }}></div>
-                                        <span style={{ 
-                                            position: 'absolute', 
-                                            right: '12px', 
-                                            top: '50%', 
-                                            transform: 'translateY(-50%)', 
-                                            fontSize: '0.75rem', 
-                                            fontWeight: '800', 
-                                            color: percentage > 90 ? 'white' : '#475569' 
+                                        <span style={{
+                                            position: 'absolute',
+                                            right: '12px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '800',
+                                            color: percentage > 90 ? 'white' : '#475569'
                                         }}>
                                             {breed.count} {breed.count === 1 ? 'Pet' : 'Pets'}
                                         </span>
@@ -912,10 +922,10 @@ const Dashboard = () => {
                                 let dogs = 0;
                                 let cats = 0;
                                 bookings.forEach(b => {
-                                    const pets = b.pets || [{ species: b.species }];
+                                    const pets = b.pets || [{ species: b.species, breed: b.breed }];
                                     pets.forEach(p => {
-                                        if ((p.species || '').toLowerCase() === 'cat') cats++;
-                                        else if ((p.species || '').toLowerCase() === 'dog' || p.species === undefined) dogs++;
+                                        if (getSpeciesByBreed(p) === 'Cat') cats++;
+                                        else dogs++;
                                     });
                                 });
                                 return (
@@ -1041,8 +1051,8 @@ const Dashboard = () => {
                         <div className="date-box" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                             <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="date-modern" />
                             {(selectedDate || searchTerm) && (
-                                <button 
-                                    className="btn-warning" 
+                                <button
+                                    className="btn-warning"
                                     style={{ padding: '0.75rem 1rem', borderRadius: '12px', height: '100%' }}
                                     onClick={() => {
                                         setSelectedDate('');
@@ -1451,7 +1461,7 @@ const Dashboard = () => {
                                         CUSTOMER ID: {selectedCustomer?.id || 'N/A'}
                                     </span>
                                 </div>
-                                
+
                                 <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '2rem' }}>
                                     <div className="info-column">
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -1502,7 +1512,7 @@ const Dashboard = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="docs-column" style={{ borderLeft: '1px solid #f1f5f9', paddingLeft: '2rem' }}>
                                         <h5 style={{ margin: '0 0 1.2rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem' }}>🆔 Identification Documents</h5>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
@@ -1550,7 +1560,7 @@ const Dashboard = () => {
                                             gap: '0.5rem',
                                             fontSize: '1rem'
                                         }}>
-                                            {i === 0 ? '🐶 First Pet Information' : i === 1 ? '🐱 Second Pet Details' : `🐾 Pet ${i + 1} Details`}
+                                            {`🐾 Pet ${i + 1} Details`}
                                         </h5>
 
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 1.5rem' }}>
@@ -1560,7 +1570,7 @@ const Dashboard = () => {
                                             </div>
                                             <div className="pet-field" style={{ padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
                                                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Species:</span>
-                                                <span style={{ fontWeight: '600' }}>{p.species || 'Dog'}</span>
+                                                <span style={{ fontWeight: '600' }}>{getSpeciesByBreed(p)}</span>
                                             </div>
                                             <div className="pet-field" style={{ padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
                                                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Breed:</span>
