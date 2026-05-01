@@ -434,9 +434,11 @@ def update_booking(booking_id):
                 WHERE b.booking_id = %s
             """, (booking_id,), one=True)
             
-            # Award reward point on completion
+            # Award reward points on completion (1 point per pet)
             if status == 'completed' and booking:
-                query_db("UPDATE customers SET reward_points = reward_points + 1 WHERE customer_id = %s", (booking['customer_id'],))
+                pet_count = query_db("SELECT COUNT(*) as count FROM pets WHERE booking_id = %s", (booking_id,), one=True)
+                points = pet_count['count'] if pet_count and pet_count['count'] > 0 else 1
+                query_db("UPDATE customers SET reward_points = reward_points + %s WHERE customer_id = %s", (points, booking['customer_id']))
             
             # Email notification on cancel
             if status == 'cancelled' and booking:
@@ -615,10 +617,10 @@ def get_customer_pets(customer_id):
     pets = query_db("""
         SELECT DISTINCT p.pet_id, p.pet_name, p.breed 
         FROM pets p
-        JOIN bookings b ON p.pet_id = b.pet_id
+        JOIN bookings b ON p.booking_id = b.booking_id
         WHERE p.customer_id = %s AND b.status = 'completed'
     """, (customer_id,))
-    return jsonify(pets)
+    return jsonify(pets if pets else [])
 
 @app.route('/api/reviews', methods=['GET', 'POST'])
 def handle_reviews():
