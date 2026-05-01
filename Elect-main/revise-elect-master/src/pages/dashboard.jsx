@@ -1022,7 +1022,7 @@ const Dashboard = () => {
         // Convert customer map to array and calculate total prices
         const groupedBookings = Object.values(customerMap).map(customer => {
             const sessionsArray = Object.values(customer.sessions);
-            const total = sessionsArray.reduce((sum, s) => sum + s.pets.reduce((pSum, p) => pSum + (p.price || 0), 0), 0);
+            const total = sessionsArray.reduce((sum, s) => sum + s.pets.reduce((pSum, p) => pSum + Number(p.price || 0), 0), 0);
             return {
                 ...customer,
                 sessions: sessionsArray,
@@ -1070,7 +1070,7 @@ const Dashboard = () => {
                     <div className="stat-box"><span className="stat-number" style={{ color: '#10b981' }}>{filteredBookings.filter(b => b.status === 'completed').length}</span><span className="stat-label">Completed</span></div>
                     <div className="stat-box"><span className="stat-number">{filteredBookings.filter(b => b.status === 'accepted').length}</span><span className="stat-label">Accepted</span></div>
                     <div className="stat-box"><span className="stat-number">{filteredBookings.filter(b => b.status === 'pending').length}</span><span className="stat-label">Pending</span></div>
-                    <div className="stat-box"><span className="stat-number">₱{filteredBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0).toLocaleString()}</span><span className="stat-label">Total Revenue</span></div>
+                    <div className="stat-box"><span className="stat-number">₱{filteredBookings.reduce((sum, b) => sum + Number(b.totalPrice || 0), 0).toLocaleString()}</span><span className="stat-label">Total Revenue</span></div>
                 </div>
                 <div className="dashboard-table-container">
                     <table className="dashboard-table">
@@ -1421,7 +1421,7 @@ const Dashboard = () => {
                                                             </select>
                                                         </td>
                                                         <td style={{ fontWeight: 'bold', color: '#10b981' }}>
-                                                            ₱{session.pets?.reduce((sum, p) => sum + (p.price || 0), 0).toLocaleString()}
+                                                            ₱{session.pets?.reduce((sum, p) => sum + Number(p.price || 0), 0).toLocaleString()}
                                                         </td>
                                                         <td>
                                                             <button

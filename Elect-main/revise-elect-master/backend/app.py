@@ -357,7 +357,7 @@ def handle_bookings():
         SELECT b.*, c.first_name, c.last_name, c.middle_name, c.purok, c.landmark, c.barangay, c.house_number, c.phone, c.email,
                c.id_front, c.id_back,
                p.pet_id, p.pet_name, p.species, p.breed, p.size as pet_size, p.age as pet_age, p.age_unit as pet_age_unit,
-               s.service_name, p.price
+               s.service_name, COALESCE(p.price, s.price) as price
         FROM bookings b
         JOIN customers c ON b.customer_id = c.customer_id
         LEFT JOIN pets p ON b.booking_id = p.booking_id
