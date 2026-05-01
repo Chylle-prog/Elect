@@ -153,9 +153,30 @@ const Dashboard = () => {
             <table>
                 <thead><tr><th>Client</th><th>Pet</th><th>Service</th><th>Date</th><th>Status</th><th>Price</th></tr></thead>
                 <tbody>
-                    ${reportData.bookings.map(b => `
-                        <tr><td>${b.clientName}</td><td>${b.petName}</td><td>${b.service}</td><td>${b.date}</td><td>${b.status}</td><td>₱${b.price}</td></tr>
-                    `).join('')}
+                    ${reportData.bookings.flatMap(b => {
+            if (b.pets && b.pets.length > 0) {
+                return b.pets.map(p => `
+                            <tr>
+                                <td>${b.clientName}</td>
+                                <td>${p.petName}</td>
+                                <td>${p.service}</td>
+                                <td>${b.date}</td>
+                                <td>${b.status}</td>
+                                <td>₱${(p.price || 0).toLocaleString()}</td>
+                            </tr>
+                        `);
+            }
+            return [`
+                        <tr>
+                            <td>${b.clientName}</td>
+                            <td>${b.petName || 'N/A'}</td>
+                            <td>${b.service || 'N/A'}</td>
+                            <td>${b.date}</td>
+                            <td>${b.status}</td>
+                            <td>₱${(b.price || 0).toLocaleString()}</td>
+                        </tr>
+                    `];
+        }).join('')}
                 </tbody>
             </table>
           </div>
@@ -330,8 +351,10 @@ const Dashboard = () => {
 
     const filteredBookings = bookings.filter(booking =>
         booking.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.petName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.service?.toLowerCase().includes(searchTerm.toLowerCase())
+        (booking.pets && booking.pets.some(p => 
+            p.petName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.service?.toLowerCase().includes(searchTerm.toLowerCase())
+        ))
     );
 
     const filteredCustomers = customers.filter(customer =>
