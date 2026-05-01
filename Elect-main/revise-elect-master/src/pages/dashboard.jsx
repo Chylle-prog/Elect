@@ -1391,6 +1391,7 @@ const Dashboard = () => {
                                                     <th>Date</th>
                                                     <th>Time</th>
                                                     <th>Status</th>
+                                                    <th>Price</th>
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
@@ -1418,6 +1419,9 @@ const Dashboard = () => {
                                                                 <option value="completed">Completed</option>
                                                                 <option value="cancelled">Cancelled</option>
                                                             </select>
+                                                        </td>
+                                                        <td style={{ fontWeight: 'bold', color: '#10b981' }}>
+                                                            ₱{session.pets?.reduce((sum, p) => sum + (p.price || 0), 0).toLocaleString()}
                                                         </td>
                                                         <td>
                                                             <button
