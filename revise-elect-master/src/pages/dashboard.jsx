@@ -621,10 +621,28 @@ const Dashboard = () => {
     };
 
     const renderBreedsAnalytics = () => {
+        const CAT_BREEDS = [
+            "Persian", "Ragdoll", "Maine Coon", "British Shorthair", "Scottish Fold",
+            "Birman", "Siamese", "Burmese", "Russian Blue", "Himalayan", "Sphynx",
+            "American Shorthair", "Exotic Shorthair", "Norwegian Forest Cat", "Siberian",
+            "Tonkinese", "Ragamuffin", "Abyssinian", "Turkish Angora", "Devon Rex",
+            "Cornish Rex", "Oriental Shorthair", "Selkirk Rex", "Manx", "Balinese"
+        ];
+        const DOG_BREEDS = [
+            "Golden Retriever", "Labrador Retriever", "Cavalier King Charles Spaniel", "Shih Tzu", "Maltese",
+            "Bichon Frise", "Pomeranian", "Samoyed", "Bernese Mountain Dog", "Newfoundland",
+            "Cocker Spaniel", "Havanese", "Collie", "Shetland Sheepdog", "Great Pyrenees",
+            "Goldendoodle", "Labradoodle", "Yorkshire Terrier", "Lhasa Apso", "Afghan Hound",
+            "Old English Sheepdog", "Portuguese Water Dog", "Schnauzer", "Chow Chow", "Beagle",
+            "Boxer", "Basset Hound", "Saint Bernard", "Greyhound", "Whippet", "Pug",
+            "French Bulldog", "Boston Terrier", "Irish Setter", "Husky", "Japanese Akita",
+            "Belgian Malinois", "German Shepherd", "Rottweiler", "Alaskan Malamute", "St. Bernard",
+            "Standard Poodle", "Giant Poodle", "Chihuahua"
+        ];
+        const displayBreeds = [...CAT_BREEDS, ...DOG_BREEDS];
         const finalCounts = {};
 
         // Initialize all displayed breeds with 0
-        const displayBreeds = services.filter(s => s.type === 'Breed').map(s => s.name.replace(' Rate', ''));
         displayBreeds.forEach(breed => {
             finalCounts[breed] = 0;
         });
@@ -632,9 +650,19 @@ const Dashboard = () => {
         // Get unique pets from bookings
         const uniquePets = new Map();
         bookings.forEach(b => {
-            const petKey = `${b.clientName}-${b.petName}`;
-            if (!uniquePets.has(petKey) && b.breed) {
-                uniquePets.set(petKey, b.breed);
+            if (b.pets && b.pets.length > 0) {
+                b.pets.forEach(p => {
+                    const petKey = `${b.clientName}-${p.petName}-${p.id}`;
+                    if (!uniquePets.has(petKey) && p.breed) {
+                        uniquePets.set(petKey, p.breed);
+                    }
+                });
+            } else if (b.breed) {
+                // Fallback for flat structure if any
+                const petKey = `${b.clientName}-${b.petName || 'Unknown'}`;
+                if (!uniquePets.has(petKey)) {
+                    uniquePets.set(petKey, b.breed);
+                }
             }
         });
 
@@ -647,9 +675,17 @@ const Dashboard = () => {
                     word.charAt(0).toUpperCase() + word.slice(1)
                 ).join(' ');
 
-                // If it's in our display list, use that exact string, otherwise add it as new
-                const matchingKey = displayBreeds.find(k => k.toLowerCase() === normalized.toLowerCase()) || normalized;
-                finalCounts[matchingKey] = (finalCounts[matchingKey] || 0) + 1;
+                // Find matching key in displayBreeds
+                const matchingKey = displayBreeds.find(k => k.toLowerCase() === normalized.toLowerCase());
+                if (matchingKey) {
+                    finalCounts[matchingKey] = (finalCounts[matchingKey] || 0) + 1;
+                } else {
+                    // If not in hardcoded list, add it as "Other" or new entry?
+                    // User said "display all the breeds that are hardcoded", 
+                    // so we should probably only count those or have an "Others" category.
+                    // For now, let's add it to finalCounts if not exists to not lose data.
+                    finalCounts[normalized] = (finalCounts[normalized] || 0) + 1;
+                }
             };
 
             processBreed(breedStr);
