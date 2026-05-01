@@ -426,28 +426,28 @@ def update_booking(booking_id):
         if status:
             query_db("UPDATE bookings SET status = %s WHERE booking_id = %s", (status, booking_id))
             
-            # Email notification on cancel
-            if status == 'completed':
+            # Fetch booking details for status-specific actions
+            booking = query_db("""
+                SELECT b.*, c.first_name, c.last_name, c.email as customer_email, c.customer_id
+                FROM bookings b
+                JOIN customers c ON b.customer_id = c.customer_id
+                WHERE b.booking_id = %s
+            """, (booking_id,), one=True)
+            
+            # Award reward point on completion
+            if status == 'completed' and booking:
                 query_db("UPDATE customers SET reward_points = reward_points + 1 WHERE customer_id = %s", (booking['customer_id'],))
             
             # Email notification on cancel
-            if status == 'cancelled':
-                booking = query_db("""
-                    SELECT b.*, c.first_name, c.last_name, c.email as customer_email
-                    FROM bookings b
-                    JOIN customers c ON b.customer_id = c.customer_id
-                    WHERE b.booking_id = %s
-                """, (booking_id,), one=True)
-                
-                if booking:
-                    subject = f"Booking #{booking_id} Cancelled"
-                    body = f"A booking has been cancelled.\n\n" \
-                           f"Booking ID: {booking_id}\n" \
-                           f"Customer: {booking['first_name']} {booking['last_name']}\n" \
-                           f"Email: {booking['customer_email']}\n" \
-                           f"Date: {booking['booking_date']}\n" \
-                           f"Time: {booking['booking_time']}\n"
-                    send_email(subject, body)
+            if status == 'cancelled' and booking:
+                subject = f"Booking #{booking_id} Cancelled"
+                body = f"A booking has been cancelled.\n\n" \
+                       f"Booking ID: {booking_id}\n" \
+                       f"Customer: {booking['first_name']} {booking['last_name']}\n" \
+                       f"Email: {booking['customer_email']}\n" \
+                       f"Date: {booking['booking_date']}\n" \
+                       f"Time: {booking['booking_time']}\n"
+                send_email(subject, body)
             
             return jsonify({"success": True, "message": f"Booking status updated to {status}"})
 

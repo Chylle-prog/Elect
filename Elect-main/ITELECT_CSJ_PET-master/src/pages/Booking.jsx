@@ -58,7 +58,7 @@ const Booking = () => {
     backToBackIdImages: []
   });
 
-  const [initialProfileComplete, setInitialProfileComplete] = useState(false);
+
 
   // Schedule
   const [selectedDate, setSelectedDate] = useState('');
@@ -107,11 +107,7 @@ const Booking = () => {
           const hasNames = user.firstName && user.lastName;
           const hasPhone = user.phone && user.phone.length >= 10;
 
-          if (hasNames && hasPhone) {
-            setInitialProfileComplete(true);
-          } else {
-            setInitialProfileComplete(false);
-          }
+          // Profile data pre-filled above — fields stay visible for review
           
           localStorage.setItem('currentUser', JSON.stringify(user));
         }
@@ -128,11 +124,7 @@ const Booking = () => {
           setCurrentUser(user);
           
           // IMMEDIATE CACHED CHECK
-          const hasNames = user.firstName && user.lastName;
-          const hasPhone = user.phone && user.phone.length >= 10;
-          if (hasNames && hasPhone) {
-            setInitialProfileComplete(true);
-          }
+          // Profile data will be pre-filled after fetch
           
           fetchAndCheckProfile(user.id);
         }
@@ -408,19 +400,11 @@ const Booking = () => {
 
    const nextStep = () => { 
     if (validateStep()) {
-      if (step === 1 && initialProfileComplete) {
-        setStep(3); // Skip Personal Info
-      } else {
-        setStep(step + 1); 
-      }
+      setStep(step + 1); 
     }
   };
    const prevStep = () => {
-    if (step === 3 && initialProfileComplete) {
-      setStep(1); // Skip back to Pet Info
-    } else {
-      setStep(step - 1);
-    }
+    setStep(step - 1);
   };
   const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
