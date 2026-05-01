@@ -507,7 +507,7 @@ const Profile = () => {
                         <p>🕒 {booking.time}</p>
                       </div>
                       <div className="appointment-price">
-                        <span>Total Price:</span>
+                        <span>Total Price: </span>
                         <span className="price-value">₱{(booking.totalPrice || 0).toLocaleString()}</span>
                       </div>
                     </div>
