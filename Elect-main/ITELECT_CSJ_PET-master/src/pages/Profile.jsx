@@ -555,22 +555,57 @@ const Profile = () => {
                   <div key={booking.id} className="history-card">
                     <div className="history-header">
                       <div className="appointment-title-row">
-                        <span className="pet-emoji">{booking.petSpecies === 'Dog' ? '🐕' : '🐈'}</span>
-                        <h3>{booking.petName}</h3>
+                        <span className="pet-emoji">
+                          {booking.pets ?
+                            (booking.pets.length > 1 ? '🐕🐈' :
+                              booking.pets[0]?.petSpecies === 'Cat' ? '🐈' : '🐕') :
+                            '🐾'
+                          }
+                        </span>
+                        <h3>
+                          {booking.pets ?
+                            (booking.pets.length > 1 ?
+                              `${booking.pets.length} Pets` :
+                              booking.pets[0]?.petName) :
+                            'Pet'
+                          }
+                        </h3>
                       </div>
                       <span className={`status-badge ${getStatusBadgeClass(booking.status)}`}>
                         {booking.status}
                       </span>
                     </div>
                     <div className="history-details">
-                      <h4>{booking.service}</h4>
-                      <p>🐾 Breed: {booking.breed || 'N/A'}</p>
+                      {booking.pets && booking.pets.length > 1 && (
+                        <div className="multi-pet-summary">
+                          <p>🐾 Multiple pets booked:</p>
+                          <ul className="pet-list-mini">
+                            {booking.pets.slice(0, 3).map((pet, i) => (
+                              <li key={i}>
+                                {pet.petSpecies === 'Cat' ? '🐈' : '🐕'} <strong>{pet.petName}</strong> - {pet.service}
+                              </li>
+                            ))}
+                            {booking.pets.length > 3 && (
+                              <li>+{booking.pets.length - 3} more pets</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                      {booking.pets && booking.pets.length === 1 && (
+                        <>
+                          <h4>{booking.pets[0].service}</h4>
+                          <p>🐾 Breed: {booking.pets[0].breed || 'N/A'}</p>
+                        </>
+                      )}
                       <p>📅 {booking.date} at {booking.time}</p>
                     </div>
                     <div className="history-price">
-                      <h4>Php {booking.price}</h4>
+                      <h4>Php {(booking.totalPrice || 0).toLocaleString()}</h4>
                     </div>
                     <div className="history-actions">
+                      <button className="view-btn" onClick={() => setSelectedBookingDetails(booking)}>
+                        View Details
+                      </button>
                       {booking.status === 'Completed' && (
                         <button className="review-btn" onClick={handleReviews}>
                           Leave Review
