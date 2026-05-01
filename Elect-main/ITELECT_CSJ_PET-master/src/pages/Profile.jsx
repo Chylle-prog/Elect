@@ -81,7 +81,7 @@ const Profile = () => {
 
     const fetchRewards = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:5000/api/customers/${currentUser.id}`);
+        const res = await fetch(`http://localhost:5000/api/customers/${currentUser.id}`);
         if (res.ok) {
           const data = await res.json();
           // Ensure data is valid before setting state
@@ -112,7 +112,7 @@ const Profile = () => {
     }
 
     try {
-      const res = await fetch('http://127.0.0.1:5000/api/customers/redeem', {
+      const res = await fetch('http://localhost:5000/api/customers/redeem', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId: currentUser.id })
@@ -147,7 +147,7 @@ const Profile = () => {
 
     const fetchBookings = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:5000/api/bookings');
+        const response = await fetch('http://localhost:5000/api/bookings');
         const allBookings = await response.json();
 
         // Safety check: Ensure allBookings is an array
@@ -185,7 +185,7 @@ const Profile = () => {
     const booking = bookings.find(b => b.id === id);
     if (window.confirm('Are you sure you want to cancel this appointment?')) {
       try {
-        await fetch(`http://127.0.0.1:5000/api/bookings/${id}`, {
+        await fetch(`http://localhost:5000/api/bookings/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'Cancelled' })
@@ -212,7 +212,7 @@ const Profile = () => {
       if (!booking) return;
 
       try {
-        const res = await fetch(`http://127.0.0.1:5000/api/available-slots?date=${newDate}&service=${encodeURIComponent(booking.service)}`);
+        const res = await fetch(`http://localhost:5000/api/available-slots?date=${newDate}`);
         if (res.ok) {
           const data = await res.json();
           // The API returns a direct array, not { available_slots: [...] }
@@ -234,7 +234,7 @@ const Profile = () => {
     try {
       const bookingToUpdate = bookings.find(b => b.id === rescheduleBookingId);
 
-      const response = await fetch(`http://127.0.0.1:5000/api/bookings/${rescheduleBookingId}`, {
+      const response = await fetch(`http://localhost:5000/api/bookings/${rescheduleBookingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

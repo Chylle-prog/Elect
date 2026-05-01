@@ -54,6 +54,7 @@ const Booking = () => {
     houseNumber: '',
     purokNumber: '',
     barangay: '',
+    landmark: '',
     city: 'Lipa City',
     backToBackIdImages: []
   });
@@ -463,6 +464,7 @@ const Booking = () => {
         houseNumber: personalInfo.houseNumber,
         purok: personalInfo.purokNumber,
         barangay: personalInfo.barangay,
+        landmark: personalInfo.landmark,
         date: selectedDate,
         time: selectedTime,
         specialRequests: specialRequests,
@@ -519,6 +521,7 @@ const Booking = () => {
       houseNumber: '',
       purokNumber: '',
       barangay: '',
+      landmark: '',
       city: 'Lipa City',
       backToBackIdImages: []
     });
@@ -928,6 +931,17 @@ const Booking = () => {
       </div>
 
       <div className="form-group">
+        <label>Landmark</label>
+        <input
+          type="text"
+          value={personalInfo.landmark}
+          onChange={(e) => setPersonalInfo({ ...personalInfo, landmark: e.target.value })}
+          className="form-control"
+          placeholder="e.g. Near the blue gate, Brgy. Hall"
+        />
+      </div>
+
+      <div className="form-group">
         <label>City</label>
         <input
           type="text"
@@ -1296,6 +1310,10 @@ const Booking = () => {
           <div className="confirm-row">
             <span>Barangay</span>
             <span>{personalInfo.barangay || '—'}</span>
+          </div>
+          <div className="confirm-row">
+            <span>Landmark</span>
+            <span>{personalInfo.landmark || '—'}</span>
           </div>
           <div className="confirm-row">
             <span>City</span>

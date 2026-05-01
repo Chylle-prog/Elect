@@ -416,49 +416,20 @@ def update_booking(booking_id):
     if request.method == 'DELETE':
         query_db("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
         return jsonify({"success": True, "message": "Booking deleted"})
-    
     if request.method == 'PUT':
         data = request.json
         status = data.get('status', '').lower()
         new_date = data.get('date')
         new_time = data.get('time')
         
-        if status:
-            query_db("UPDATE bookings SET status = %s WHERE booking_id = %s", (status, booking_id))
-            
-            # Fetch booking details for status-specific actions
-            booking = query_db("""
-                SELECT b.*, c.first_name, c.last_name, c.email as customer_email, c.customer_id
-                FROM bookings b
-                JOIN customers c ON b.customer_id = c.customer_id
-                WHERE b.booking_id = %s
-            """, (booking_id,), one=True)
-            
-            # Award reward points on completion (1 point per pet)
-            if status == 'completed' and booking:
-                pet_count = query_db("SELECT COUNT(*) as count FROM pets WHERE booking_id = %s", (booking_id,), one=True)
-                points = pet_count['count'] if pet_count and pet_count['count'] > 0 else 1
-                query_db("UPDATE customers SET reward_points = reward_points + %s WHERE customer_id = %s", (points, booking['customer_id']))
-            
-            # Email notification on cancel
-            if status == 'cancelled' and booking:
-                subject = f"Booking #{booking_id} Cancelled"
-                body = f"A booking has been cancelled.\n\n" \
-                       f"Booking ID: {booking_id}\n" \
-                       f"Customer: {booking['first_name']} {booking['last_name']}\n" \
-                       f"Email: {booking['customer_email']}\n" \
-                       f"Date: {booking['booking_date']}\n" \
-                       f"Time: {booking['booking_time']}\n"
-                send_email(subject, body)
-            
-            return jsonify({"success": True, "message": f"Booking status updated to {status}"})
+        response_msg = "Booking updated"
 
-        # Simple reschedule
+        # 1. Handle reschedule if date and time provided
         if new_date and new_time:
-            # Check exact match only
+            # Check for scheduling conflicts (excluding current booking)
             conflict = query_db("""
                 SELECT booking_id FROM bookings 
-                WHERE booking_date::text = %s 
+                WHERE booking_date::date = %s::date 
                 AND booking_time = %s 
                 AND booking_id != %s
                 AND status IN ('pending', 'accepted')
@@ -469,9 +440,45 @@ def update_booking(booking_id):
                 
             query_db("UPDATE bookings SET booking_date = %s, booking_time = %s WHERE booking_id = %s", 
                      (new_date, new_time, booking_id))
-            return jsonify({"success": True, "message": "Booking rescheduled successfully"})
+            response_msg = "Booking rescheduled successfully"
+
+        # 2. Handle status update
+        if status:
+            query_db("UPDATE bookings SET status = %s WHERE booking_id = %s", (status, booking_id))
             
-        return jsonify({"success": True, "message": "Booking updated"})
+            # Fetch booking details for status-specific actions (reward points, emails)
+            booking = query_db("""
+                SELECT b.*, c.first_name, c.last_name, c.email as customer_email, c.customer_id
+                FROM bookings b
+                JOIN customers c ON b.customer_id = c.customer_id
+                WHERE b.booking_id = %s
+            """, (booking_id,), one=True)
+            
+            if booking:
+                # Award reward points on completion
+                if status == 'completed':
+                    pet_count = query_db("SELECT COUNT(*) as count FROM pets WHERE booking_id = %s", (booking_id,), one=True)
+                    points = pet_count['count'] if pet_count and pet_count['count'] > 0 else 1
+                    query_db("UPDATE customers SET reward_points = reward_points + %s WHERE customer_id = %s", (points, booking['customer_id']))
+                
+                # Email notification on cancel
+                if status == 'cancelled':
+                    subject = f"Booking #{booking_id} Cancelled"
+                    body = f"A booking has been cancelled.\n\n" \
+                           f"Booking ID: {booking_id}\n" \
+                           f"Customer: {booking['first_name']} {booking['last_name']}\n" \
+                           f"Email: {booking['customer_email']}\n" \
+                           f"Date: {booking['booking_date']}\n" \
+                           f"Time: {booking['booking_time']}\n"
+                    send_email(subject, body)
+            
+            if response_msg == "Booking updated":
+                response_msg = f"Booking status updated to {status}"
+            else:
+                response_msg += f" and status updated to {status}"
+            
+        return jsonify({"success": True, "message": response_msg})
+
 
 @app.route('/api/customers', methods=['GET', 'POST'])
 def handle_customers():
