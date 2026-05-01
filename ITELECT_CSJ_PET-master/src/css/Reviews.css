@@ -199,13 +199,13 @@
 
 .reviews-card-section {
   width: 95%;
-  max-width: 1300px;
-  margin: 0 auto;
-  background: #fcecae;
-  border-radius: 60px;
-  padding: 100px 0;
-  border: 2px solid rgba(218, 165, 32, 0.3);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
+  max-width: 1200px;
+  margin: 40px auto;
+  background: linear-gradient(135deg, #fef5d4 0%, #fcecae 100%);
+  border-radius: 40px;
+  padding: 60px 0;
+  border: 4px solid #ffd000;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.05);
 }
 
 .reviews-meta-header {
@@ -544,8 +544,8 @@
 .star-filter-section {
   background: white;
   border-radius: 20px;
-  padding: 25px;
-  margin-bottom: 30px;
+  padding: 15px 20px;
+  margin-bottom: 20px;
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
@@ -835,16 +835,19 @@ input:disabled {
 
 .reviews-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 30px;
 }
 
 .modern-review-card {
-  padding: 40px;
+  padding: 30px;
   background: white;
-  border-radius: 40px;
+  border-radius: 30px;
   border: 1px solid rgba(0, 0, 0, 0.05);
   transition: 0.3s;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .modern-review-card:hover {
@@ -894,16 +897,16 @@ input:disabled {
 .pet-tag {
   font-weight: 700;
   color: var(--primary);
-  margin-bottom: 15px;
-  font-size: 1.1rem;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
 }
 
 .review-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  line-height: 1.4;
   color: #555;
   font-style: italic;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 /* Review Images Gallery - Better positioning */
@@ -995,7 +998,9 @@ input:disabled {
     flex-direction: column;
     align-items: stretch;
   }
+}
 
+@media (max-width: 600px) {
   .reviews-grid {
     grid-template-columns: 1fr;
   }

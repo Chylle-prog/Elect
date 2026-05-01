@@ -73,11 +73,27 @@ const App = () => {
 
         if (validate()) {
             if (isForgotPasswordView) {
-                alert('Password has been reset successfully! Please login with your new password.');
-                setIsForgotPasswordView(false);
-                setPassword('');
-                setNewPassword('');
-                setConfirmPassword('');
+                try {
+                    const res = await fetch(`${API_BASE}/reset-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, newPassword })
+                    });
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        alert('Password has been reset successfully! Please login with your new password.');
+                        setIsForgotPasswordView(false);
+                        setPassword('');
+                        setNewPassword('');
+                        setConfirmPassword('');
+                    } else {
+                        setErrors({ email: data.message || 'Reset failed' });
+                    }
+                } catch (err) {
+                    console.error('Reset error:', err);
+                    setErrors({ login: 'Server error. Please try again.' });
+                }
                 return;
             }
 

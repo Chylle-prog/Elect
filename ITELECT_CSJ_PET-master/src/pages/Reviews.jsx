@@ -185,6 +185,7 @@ const Reviews = () => {
 
     try {
       const processedImages = await processImages();
+      console.log('Sending processed images:', processedImages.map(img => img.substring(0, 50) + '...'));
       
       const response = await fetch('http://127.0.0.1:5000/api/reviews', {
         method: 'POST',
@@ -535,7 +536,9 @@ const Reviews = () => {
                       </div>
                     </div>
                     <div className="review-body">
-                      <p className="pet-tag">🐕 {review.pet}</p>
+                      <p className="pet-tag">
+                        {review.species === 'Cat' ? '🐈' : '🐕'} {review.pet}
+                      </p>
                       <p className="review-text">"{review.text}"</p>
                     </div>
 
@@ -543,7 +546,7 @@ const Reviews = () => {
                     {review.images && review.images.length > 0 && (
                       <div className="review-images">
                         <div className="image-gallery">
-                          {review.images.map((image, index) => (
+                          {review.images.map((image, index) => image && (
                             <div key={index} className="review-image">
                               <img
                                 src={image}

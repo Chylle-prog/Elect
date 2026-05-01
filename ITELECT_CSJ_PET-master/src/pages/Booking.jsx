@@ -408,19 +408,11 @@ const Booking = () => {
 
    const nextStep = () => { 
     if (validateStep()) {
-      if (step === 1 && initialProfileComplete) {
-        setStep(3); // Skip Personal Info
-      } else {
-        setStep(step + 1); 
-      }
+      setStep(step + 1); 
     }
   };
    const prevStep = () => {
-    if (step === 3 && initialProfileComplete) {
-      setStep(1); // Skip back to Pet Info
-    } else {
-      setStep(step - 1);
-    }
+    setStep(step - 1);
   };
   const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -460,6 +452,7 @@ const Booking = () => {
         }
         return {
           petName: pet.petName,
+          petType: pet.petType,
           breed: pet.petBreed,
           petAge: pet.petAge,
           petAgeUnit: pet.petAgeUnit,
@@ -1354,11 +1347,9 @@ const Booking = () => {
 
       <div className="step-indicator">
         <div className={`step ${step >= 1 ? 'active' : ''}`}>1. Pet Info</div>
-        {!initialProfileComplete && (
-          <div className={`step ${step >= 2 ? 'active' : ''}`}>2. Personal Info</div>
-        )}
-        <div className={`step ${step >= 3 ? 'active' : ''}`}>{initialProfileComplete ? '2. Schedule' : '3. Schedule'}</div>
-        <div className={`step ${step >= 4 ? 'active' : ''}`}>{initialProfileComplete ? '3. Confirm' : '4. Confirm'}</div>
+        <div className={`step ${step >= 2 ? 'active' : ''}`}>2. Personal Info</div>
+        <div className={`step ${step >= 3 ? 'active' : ''}`}>3. Schedule</div>
+        <div className={`step ${step >= 4 ? 'active' : ''}`}>4. Confirm</div>
       </div>
 
       <div className="booking-content">

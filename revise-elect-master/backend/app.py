@@ -9,22 +9,48 @@ app = Flask(__name__)
 CORS(app)
 
 def to_bytes(b64_str):
-    if not b64_str or not isinstance(b64_str, str): return None
+    if not b64_str or not isinstance(b64_str, str): 
+        print(f"to_bytes: Invalid input type: {type(b64_str)}")
+        return None
     try:
-        if ',' in b64_str: b64_str = b64_str.split(',')[1]
-        return base64.b64decode(b64_str)
+        header = ""
+        if ',' in b64_str:
+            parts = b64_str.split(',')
+            header = parts[0]
+            b64_str = parts[1]
+        print(f"to_bytes: Processing string with header: {header}, length: {len(b64_str)}")
+        decoded = base64.b64decode(b64_str)
+        print(f"to_bytes: Decoded bytes length: {len(decoded)}")
+        return decoded
     except Exception as e:
-        print(f"Error decoding base64: {e}")
+        print(f"to_bytes: Decoding error: {e}")
         return None
 
 def to_base64(binary):
     if not binary: return None
     try:
-        # If it's already a memoryview (psycopg2)
         if hasattr(binary, 'tobytes'): binary = binary.tobytes()
+        
+        # Detect mime type from binary headers
+        mime = None
+        if binary.startswith(b'\xff\xd8\xff'):
+            mime = "image/jpeg"
+        elif binary.startswith(b'\x89PNG\r\n\x1a\n'):
+            mime = "image/png"
+        elif binary.startswith(b'GIF87a') or binary.startswith(b'GIF89a'):
+            mime = "image/gif"
+        elif binary.startswith(b'RIFF') and binary[8:12] == b'WEBP':
+            mime = "image/webp"
+
+        if not mime:
+            print(f"to_base64: Unknown image format or invalid data (len: {len(binary)})")
+            return None
+
         b64 = base64.b64encode(binary).decode('utf-8')
-        return f"data:image/png;base64,{b64}"
-    except: return None
+        return f"data:{mime};base64,{b64}"
+    except Exception as e:
+        print(f"Base64 conversion error: {e}")
+        return None
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -48,7 +74,20 @@ def login():
         return jsonify({
             "success": False,
             "message": "Invalid credentials"
-        })
+        }), 401
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.json
+    email = data.get('email')
+    new_password = data.get('newPassword')
+    
+    admin = query_db("SELECT * FROM admins WHERE email = %s", (email,), one=True)
+    if admin:
+        query_db("UPDATE admins SET password = %s WHERE email = %s", (new_password, email))
+        return jsonify({"success": True, "message": "Password reset successful"})
+    else:
+        return jsonify({"success": False, "message": "Admin email not found"}), 404
 
 @app.route('/api/customer/login', methods=['POST'])
 def customer_login():
@@ -298,7 +337,7 @@ def handle_bookings():
             query_db("""
                 INSERT INTO pets (customer_id, booking_id, pet_name, species, breed, size, age, age_unit, service_id, price) 
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (cust_id, booking_id, p.get('petName'), 'Dog', p.get('breed'), p.get('petSize'), p.get('petAge'), p.get('petAgeUnit'), p['service_id'], final_price))
+            """, (cust_id, booking_id, p.get('petName'), p.get('petType', 'Dog').capitalize(), p.get('breed'), p.get('petSize'), p.get('petAge'), p.get('petAgeUnit'), p['service_id'], final_price))
 
         return jsonify({"success": True, "message": "Booking created with pets", "bookingId": booking_id, "discountApplied": applied_discount})
 
@@ -374,9 +413,18 @@ def update_booking(booking_id):
         if status:
             query_db("UPDATE bookings SET status = %s WHERE booking_id = %s", (status, booking_id))
             
-            # Email notification on cancel
+            # Reward points and notification
             if status == 'completed':
-                query_db("UPDATE customers SET reward_points = reward_points + 1 WHERE customer_id = %s", (booking['customer_id'],))
+                # Get customer ID and pet count
+                booking_info = query_db("""
+                    SELECT customer_id, (SELECT COUNT(*) FROM pets WHERE booking_id = %s) as pet_count
+                    FROM bookings 
+                    WHERE booking_id = %s
+                """, (booking_id, booking_id), one=True)
+                
+                if booking_info:
+                    query_db("UPDATE customers SET reward_points = reward_points + %s WHERE customer_id = %s", 
+                             (booking_info['pet_count'], booking_info['customer_id']))
             
             # Email notification on cancel
             if status == 'cancelled':
@@ -563,7 +611,7 @@ def get_customer_pets(customer_id):
     pets = query_db("""
         SELECT DISTINCT p.pet_id, p.pet_name, p.breed 
         FROM pets p
-        JOIN bookings b ON p.pet_id = b.pet_id
+        JOIN bookings b ON p.booking_id = b.booking_id
         WHERE p.customer_id = %s AND b.status = 'completed'
     """, (customer_id,))
     return jsonify(pets)
@@ -582,16 +630,20 @@ def handle_reviews():
             
         rid = review_id['review_id']
         images = data.get('images', [])
-        for img in images:
+        print(f"POST /api/reviews: Processing {len(images)} images for review {rid}")
+        for idx, img in enumerate(images):
             b_data = to_bytes(img)
             if b_data:
                 query_db("INSERT INTO review_images (review_id, image_data) VALUES (%s, %s)", (rid, b_data))
+                print(f"POST /api/reviews: Inserted image {idx} for review {rid}")
+            else:
+                print(f"POST /api/reviews: Failed to process image {idx} for review {rid}")
             
         return jsonify({"success": True, "message": "Review posted", "review_id": rid})
 
     # GET
     reviews = query_db("""
-        SELECT r.*, c.first_name, c.last_name, p.pet_name, p.breed as pet_breed
+        SELECT r.*, c.first_name, c.last_name, c.barangay, p.pet_name, p.breed as pet_breed, p.species
         FROM reviews r
         JOIN customers c ON r.customer_id = c.customer_id
         LEFT JOIN pets p ON r.pet_id = p.pet_id
@@ -601,16 +653,28 @@ def handle_reviews():
     mapped = []
     for r in reviews:
         imgs = query_db("SELECT image_data FROM review_images WHERE review_id = %s", (r['review_id'],))
+        review_images = []
+        for i in imgs:
+            b64 = to_base64(i['image_data'])
+            if b64:
+                review_images.append(b64)
+                print(f"Review {r['review_id']} image length: {len(b64)}")
+            else:
+                print(f"Review {r['review_id']} image conversion failed")
+                
         mapped.append({
             "id": r['review_id'],
             "name": f"{r['first_name']} {r['last_name']}".strip(),
             "rating": r['rating'],
             "text": r['review_text'],
             "pet": f"{r['pet_name']} ({r['pet_breed']})" if r['pet_name'] else "General",
+            "species": r['species'] or 'Dog',
             "date": r['created_at'].strftime("%Y-%m-%d"),
-            "images": [to_base64(i['image_data']) for i in imgs],
+            "location": r['barangay'] or "Unknown",
+            "images": review_images,
             "customer_id": r['customer_id']
         })
+    print(f"Returning {len(mapped)} reviews")
     return jsonify(mapped)
 
 @app.route('/api/reviews/<int:review_id>', methods=['PUT', 'DELETE'])
