@@ -74,18 +74,18 @@ const Dashboard = () => {
         if (!p) return 'Dog';
         // If species is explicitly set and not 'dog' (since it might be default), trust it
         if (p.species && p.species.toLowerCase() === 'cat') return 'Cat';
-        
+
         const breed = (p.breed || '').trim().toLowerCase();
         if (!breed) return 'Dog';
 
         // Check against known cat breeds first (more specific)
-        const isKnownCat = CAT_BREEDS_LIST.some(b => 
-            b.toLowerCase() !== 'mixed breed' && 
-            b.toLowerCase() !== 'other' && 
+        const isKnownCat = CAT_BREEDS_LIST.some(b =>
+            b.toLowerCase() !== 'mixed breed' &&
+            b.toLowerCase() !== 'other' &&
             b.toLowerCase() === breed
         );
         if (isKnownCat || breed === 'puspin') return 'Cat';
-        
+
         return 'Dog';
     };
 
@@ -1339,6 +1339,7 @@ const Dashboard = () => {
                                                 <div className="info-item" style={{ background: 'white', padding: '0.6rem', borderRadius: '8px' }}><span className="label">First Name:</span><span className="value">{selectedCustomer.firstName}</span></div>
                                                 <div className="info-item" style={{ background: 'white', padding: '0.6rem', borderRadius: '8px' }}><span className="label">Middle Name:</span><span className="value">{selectedCustomer.middleName || 'N/A'}</span></div>
                                                 <div className="info-item" style={{ background: 'white', padding: '0.6rem', borderRadius: '8px' }}><span className="label">Last Name:</span><span className="value">{selectedCustomer.lastName}</span></div>
+                                                <div className="info-item" style={{ background: 'white', padding: '0.6rem', borderRadius: '8px' }}><span className="label">Gender:</span><span className="value">{selectedCustomer.gender || 'N/A'}</span></div>
                                                 <div className="info-item" style={{ background: 'white', padding: '0.6rem', borderRadius: '8px' }}><span className="label">Email:</span><span className="value">{selectedCustomer.email}</span></div>
                                                 <div className="info-item" style={{ background: 'white', padding: '0.6rem', borderRadius: '8px' }}><span className="label">Phone:</span><span className="value">{selectedCustomer.phone}</span></div>
                                                 <div className="info-item" style={{ background: 'white', padding: '0.6rem', borderRadius: '8px' }}><span className="label">House Number:</span><span className="value">{selectedCustomer.houseNumber}</span></div>
@@ -1482,6 +1483,10 @@ const Dashboard = () => {
                                                 <span style={{ fontWeight: '600', color: '#1e293b' }}>{selectedCustomer?.lastName}</span>
                                             </div>
                                             <div className="info-field">
+                                                <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700', marginBottom: '4px' }}>Gender</span>
+                                                <span style={{ fontWeight: '600', color: '#1e293b' }}>{selectedCustomer?.gender || 'N/A'}</span>
+                                            </div>
+                                            <div className="info-field">
                                                 <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700', marginBottom: '4px' }}>Email</span>
                                                 <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '0.85rem', wordBreak: 'break-all' }}>{selectedCustomer?.email}</span>
                                             </div>
@@ -1571,6 +1576,10 @@ const Dashboard = () => {
                                             <div className="pet-field" style={{ padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
                                                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Pet Name:</span>
                                                 <span style={{ fontWeight: '700', color: '#1e293b' }}>{p.petName}</span>
+                                            </div>
+                                            <div className="pet-field" style={{ padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                                                <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Pet Nickname:</span>
+                                                <span style={{ fontWeight: '600' }}>{p.petNickname || 'N/A'}</span>
                                             </div>
                                             <div className="pet-field" style={{ padding: '0.4rem 0', borderBottom: '1px solid #f1f5f9' }}>
                                                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Species:</span>

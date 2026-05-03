@@ -7,6 +7,7 @@ const Register = () => {
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
+        gender: '',
         password: '',
         confirmPassword: ''
     });
@@ -23,8 +24,8 @@ const Register = () => {
 
     const validateForm = () => {
         const newErrors = {};
-        if (!formData.fullName) newErrors.fullName = 'Full Name is required';
         if (!formData.email) newErrors.email = 'Email is required';
+        if (!formData.gender) newErrors.gender = 'Gender is required';
         if (!formData.password) newErrors.password = 'Password is required';
         else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
 
@@ -45,6 +46,7 @@ const Register = () => {
                     body: JSON.stringify({
                         fullName: formData.fullName,
                         email: formData.email,
+                        gender: formData.gender,
                         password: formData.password
                     })
                 });
@@ -64,7 +66,8 @@ const Register = () => {
                         houseNumber: user.houseNumber || '',
                         purok: user.purok || '',
                         barangay: user.barangay || '',
-                        landmark: user.landmark || ''
+                        landmark: user.landmark || '',
+                        gender: user.gender || ''
                     }));
 
                     navigate('/profile');
@@ -149,6 +152,30 @@ const Register = () => {
                                     className={errors.email ? 'error' : ''}
                                 />
                                 {errors.email && <span className="error-message">{errors.email}</span>}
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="gender">Gender</label>
+                                <select
+                                    id="gender"
+                                    name="gender"
+                                    value={formData.gender}
+                                    onChange={handleChange}
+                                    className={errors.gender ? 'error' : ''}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #d9d9d9',
+                                        fontSize: '1rem'
+                                    }}
+                                >
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                {errors.gender && <span className="error-message">{errors.gender}</span>}
                             </div>
 
                             <div className="form-row">

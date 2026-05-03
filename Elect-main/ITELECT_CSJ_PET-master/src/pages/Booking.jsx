@@ -35,6 +35,7 @@ const Booking = () => {
     pets: [
       {
         petName: '',
+        petNickname: '',
         petType: 'dog',
         petBreed: '',
         petAge: '',
@@ -55,6 +56,7 @@ const Booking = () => {
     purokNumber: '',
     barangay: '',
     landmark: '',
+    gender: '',
     city: 'Lipa City',
     backToBackIdImages: []
   });
@@ -91,7 +93,7 @@ const Booking = () => {
         if (res.ok) {
           const user = await res.json();
           console.log("Checking completion for:", user.email);
-          
+
           // Pre-fill state
           setPersonalInfo(prev => ({
             ...prev,
@@ -102,14 +104,15 @@ const Booking = () => {
             houseNumber: user.houseNumber || '',
             purokNumber: user.purok || '',
             barangay: user.barangay || '',
-            landmark: user.landmark || ''
+            landmark: user.landmark || '',
+            gender: user.gender || ''
           }));
 
           const hasNames = user.firstName && user.lastName;
           const hasPhone = user.phone && user.phone.length >= 10;
 
           // Profile data pre-filled above — fields stay visible for review
-          
+
           localStorage.setItem('currentUser', JSON.stringify(user));
         }
       } catch (err) {
@@ -123,10 +126,10 @@ const Booking = () => {
         const user = JSON.parse(userStr);
         if (user.id) {
           setCurrentUser(user);
-          
+
           // IMMEDIATE CACHED CHECK
           // Profile data will be pre-filled after fetch
-          
+
           fetchAndCheckProfile(user.id);
         }
       } catch (e) {
@@ -297,14 +300,15 @@ const Booking = () => {
 
     if (newCount > currentCount) {
       for (let i = currentCount; i < newCount; i++) {
-        newPets.push({ 
-          petName: '', 
-          petType: 'dog', 
-          petBreed: '', 
+        newPets.push({
+          petName: '',
+          petNickname: '',
+          petType: 'dog',
+          petBreed: '',
           petAge: '',
           petAgeUnit: 'years',
-          pricingOption: '', 
-          selectedService: '' 
+          pricingOption: '',
+          selectedService: ''
         });
       }
     } else {
@@ -327,8 +331,8 @@ const Booking = () => {
     // Auto-select Special Rate if the chosen breed exists in database specialRates
     if (field === 'petBreed') {
       const breedToMatch = value.replace('Saint Bernard', 'St. Bernard').toLowerCase();
-      const match = specialRates.find(r => 
-        r.breed.toLowerCase() === breedToMatch || 
+      const match = specialRates.find(r =>
+        r.breed.toLowerCase() === breedToMatch ||
         r.breed.toLowerCase() === value.toLowerCase()
       );
 
@@ -365,6 +369,7 @@ const Booking = () => {
     if (step === 2) {
       if (!personalInfo.firstName) newErrors.firstName = 'First name is required';
       if (!personalInfo.lastName) newErrors.lastName = 'Last name is required';
+      if (!personalInfo.gender) newErrors.gender = 'Gender is required';
 
       // Philippine Contact Number Validation
       const contactRegex = /^09\d{9}$/;
@@ -399,12 +404,12 @@ const Booking = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-   const nextStep = () => { 
+  const nextStep = () => {
     if (validateStep()) {
-      setStep(step + 1); 
+      setStep(step + 1);
     }
   };
-   const prevStep = () => {
+  const prevStep = () => {
     setStep(step - 1);
   };
   const handleSubmit = (e) => {
@@ -445,6 +450,7 @@ const Booking = () => {
         }
         return {
           petName: pet.petName,
+          petNickname: pet.petNickname,
           breed: pet.petBreed === 'Other' ? (pet.customBreed || 'Other') : pet.petBreed,
           species: pet.petType === 'dog' ? 'Dog' : 'Cat',
           petAge: pet.petAge,
@@ -465,6 +471,7 @@ const Booking = () => {
         purok: personalInfo.purokNumber,
         barangay: personalInfo.barangay,
         landmark: personalInfo.landmark,
+        gender: personalInfo.gender,
         date: selectedDate,
         time: selectedTime,
         specialRequests: specialRequests,
@@ -505,6 +512,7 @@ const Booking = () => {
       pets: [
         {
           petName: '',
+          petNickname: '',
           petType: 'dog',
           petBreed: '',
           pricingOption: '',
@@ -522,6 +530,7 @@ const Booking = () => {
       purokNumber: '',
       barangay: '',
       landmark: '',
+      gender: '',
       city: 'Lipa City',
       backToBackIdImages: []
     });
@@ -593,6 +602,19 @@ const Booking = () => {
             </div>
 
             <div className="form-group">
+              <label>Pet Nickname</label>
+              <input
+                type="text"
+                value={pet.petNickname}
+                onChange={(e) => {
+                  handlePetInfoChange(index, 'petNickname', e.target.value);
+                }}
+                className="form-control"
+                placeholder="Enter nickname"
+              />
+            </div>
+
+            <div className="form-group">
               <label>{pet.petType === 'dog' ? 'Dog' : 'Cat'} Breed</label>
               <select
                 value={pet.petBreed}
@@ -604,8 +626,8 @@ const Booking = () => {
               >
                 <option value="">Select breed</option>
                 {Array.from(new Set(
-                  pet.petType === 'cat' 
-                    ? CAT_BREEDS 
+                  pet.petType === 'cat'
+                    ? CAT_BREEDS
                     : [...DOG_BREEDS, ...specialRates.map(r => r.breed)]
                 )).sort().map(breed => (
                   <option key={breed} value={breed}>{breed}</option>
@@ -636,7 +658,7 @@ const Booking = () => {
                   type="text"
                   value={pet.petAge}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, ''); 
+                    const val = e.target.value.replace(/\D/g, '');
                     handlePetInfoChange(index, 'petAge', val);
                   }}
                   className="form-control"
@@ -670,8 +692,8 @@ const Booking = () => {
                     <button
                       type="button"
                       className={`pricing-btn ${pet.pricingOption === 'regular' ? 'active' : ''}`}
-                      disabled={specialRates.some(r => 
-                        r.breed.toLowerCase() === pet.petBreed.toLowerCase() || 
+                      disabled={specialRates.some(r =>
+                        r.breed.toLowerCase() === pet.petBreed.toLowerCase() ||
                         r.breed.toLowerCase() === pet.petBreed.replace('Saint Bernard', 'St. Bernard').toLowerCase()
                       )}
                       onClick={() => {
@@ -680,8 +702,8 @@ const Booking = () => {
                         newPets[index] = { ...newPets[index], pricingOption: 'regular', selectedService: '' };
                         setPetInfo({ ...petInfo, pets: newPets });
                       }}
-                      title={specialRates.some(r => 
-                        r.breed.toLowerCase() === pet.petBreed.toLowerCase() || 
+                      title={specialRates.some(r =>
+                        r.breed.toLowerCase() === pet.petBreed.toLowerCase() ||
                         r.breed.toLowerCase() === pet.petBreed.replace('Saint Bernard', 'St. Bernard').toLowerCase()
                       ) ? "This breed has a mandatory special rate" : ""}
                     >
@@ -690,8 +712,8 @@ const Booking = () => {
                     <button
                       type="button"
                       className={`pricing-btn ${pet.pricingOption === 'special' ? 'active' : ''}`}
-                      disabled={!specialRates.some(r => 
-                        r.breed.toLowerCase() === pet.petBreed.toLowerCase() || 
+                      disabled={!specialRates.some(r =>
+                        r.breed.toLowerCase() === pet.petBreed.toLowerCase() ||
                         r.breed.toLowerCase() === pet.petBreed.replace('Saint Bernard', 'St. Bernard').toLowerCase()
                       )}
                       onClick={() => {
@@ -699,8 +721,8 @@ const Booking = () => {
                         newPets[index] = { ...newPets[index], pricingOption: 'special', selectedService: pet.petBreed };
                         setPetInfo({ ...petInfo, pets: newPets });
                       }}
-                      title={!specialRates.some(r => 
-                        r.breed.toLowerCase() === pet.petBreed.toLowerCase() || 
+                      title={!specialRates.some(r =>
+                        r.breed.toLowerCase() === pet.petBreed.toLowerCase() ||
                         r.breed.toLowerCase() === pet.petBreed.replace('Saint Bernard', 'St. Bernard').toLowerCase()
                       ) ? "Only available for specific breeds with special rates" : ""}
                     >
@@ -745,9 +767,9 @@ const Booking = () => {
                     <div className="special-breed-grid">
                       {specialRates.map(rate => {
                         const breedToMatch = pet.petBreed.replace('Saint Bernard', 'St. Bernard').toLowerCase();
-                        const isMatch = rate.breed.toLowerCase() === breedToMatch || 
-                                      rate.breed.toLowerCase() === pet.petBreed.toLowerCase();
-                        
+                        const isMatch = rate.breed.toLowerCase() === breedToMatch ||
+                          rate.breed.toLowerCase() === pet.petBreed.toLowerCase();
+
                         return (
                           <div
                             key={rate.breed}
@@ -863,6 +885,46 @@ const Booking = () => {
           />
           {errors.lastName && <div className="error">{errors.lastName}</div>}
         </div>
+      </div>
+
+      <div className="form-group">
+        <label>Gender <span className="required">*</span></label>
+        <div className="gender-selection" style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="radio"
+              name="gender"
+              value="Male"
+              checked={personalInfo.gender === 'Male'}
+              onChange={(e) => setPersonalInfo({ ...personalInfo, gender: e.target.value })}
+              style={{ width: '18px', height: '18px' }}
+            />
+            Male
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="radio"
+              name="gender"
+              value="Female"
+              checked={personalInfo.gender === 'Female'}
+              onChange={(e) => setPersonalInfo({ ...personalInfo, gender: e.target.value })}
+              style={{ width: '18px', height: '18px' }}
+            />
+            Female
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="radio"
+              name="gender"
+              value="Other"
+              checked={personalInfo.gender === 'Other'}
+              onChange={(e) => setPersonalInfo({ ...personalInfo, gender: e.target.value })}
+              style={{ width: '18px', height: '18px' }}
+            />
+            Other
+          </label>
+        </div>
+        {errors.gender && <div className="error">{errors.gender}</div>}
       </div>
 
       <div className="form-group">
@@ -1142,12 +1204,12 @@ const Booking = () => {
         )}
 
         {/* Promo Code Section moved to Schedule */}
-        <div className="promo-code-section" style={{ 
-          marginTop: '30px', 
-          padding: '20px', 
-          backgroundColor: '#f0f9ff', 
-          borderRadius: '12px', 
-          border: '2px solid #bae6fd' 
+        <div className="promo-code-section" style={{
+          marginTop: '30px',
+          padding: '20px',
+          backgroundColor: '#f0f9ff',
+          borderRadius: '12px',
+          border: '2px solid #bae6fd'
         }}>
           <label style={{ display: 'block', fontSize: '0.9rem', color: '#0369a1', marginBottom: '10px', fontWeight: 'bold' }}>
             🎁 Have a Reward Code?
@@ -1178,7 +1240,7 @@ const Booking = () => {
               }}
             />
             {!isCodeVerified ? (
-              <button 
+              <button
                 type="button"
                 onClick={handleVerifyCode}
                 className="btn-primary"
@@ -1187,7 +1249,7 @@ const Booking = () => {
                 Verify
               </button>
             ) : (
-              <button 
+              <button
                 type="button"
                 onClick={() => {
                   setIsCodeVerified(false);
@@ -1204,10 +1266,10 @@ const Booking = () => {
           </div>
           {codeError && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '8px', fontWeight: '600' }}>❌ {codeError}</p>}
           {isCodeVerified && (
-          <p style={{ color: '#059669', fontSize: '0.8rem', marginTop: '8px', fontWeight: '600' }}>
-            ✅ {customerTier} Tier Applied! -Php {getAppliedDiscount()} discount ({discountPercent}% off most expensive service)
-          </p>
-        )}
+            <p style={{ color: '#059669', fontSize: '0.8rem', marginTop: '8px', fontWeight: '600' }}>
+              ✅ {customerTier} Tier Applied! -Php {getAppliedDiscount()} discount ({discountPercent}% off most expensive service)
+            </p>
+          )}
         </div>
       </div>
       {/* Special Requests */}
@@ -1253,6 +1315,12 @@ const Booking = () => {
                   <span>Breed</span>
                   <span>{pet.petBreed || '—'}</span>
                 </div>
+                {pet.petNickname && (
+                  <div className="confirm-row">
+                    <span>Nickname</span>
+                    <span>{pet.petNickname}</span>
+                  </div>
+                )}
                 <div className="confirm-row">
                   <span>Age</span>
                   <span>{pet.petAge ? `${pet.petAge} ${pet.petAgeUnit === 'months' ? 'months' : 'years'}` : '—'}</span>

@@ -96,6 +96,7 @@ def customer_login():
                 "purok": customer['purok'],
                 "barangay": customer['barangay'],
                 "landmark": customer['landmark'],
+                "gender": customer['gender'],
                 "hasIdFront": bool(customer['id_front']),
                 "hasIdBack": bool(customer['id_back'])
             }
@@ -122,9 +123,9 @@ def customer_register():
     last_name = ' '.join(fullName.split(' ')[1:]) if fullName and ' ' in fullName else ''
 
     query_db("""
-        INSERT INTO customers (first_name, last_name, email, password, phone, status, id_front, id_back) 
-        VALUES (%s, %s, %s, %s, %s, 'Active', %s, %s)
-    """, (first_name, last_name, email, password, phone, to_bytes(data.get('idFront')), to_bytes(data.get('idBack'))))
+        INSERT INTO customers (first_name, last_name, email, password, phone, gender, status, id_front, id_back) 
+        VALUES (%s, %s, %s, %s, %s, %s, 'Active', %s, %s)
+    """, (first_name, last_name, email, password, phone, data.get('gender'), to_bytes(data.get('idFront')), to_bytes(data.get('idBack'))))
 
     customer = query_db("SELECT * FROM customers WHERE email = %s", (email,), one=True)
     return jsonify({
@@ -135,7 +136,8 @@ def customer_register():
             "firstName": customer['first_name'],
             "lastName": customer['last_name'],
             "fullName": f"{customer['first_name']} {customer['last_name']}".strip(),
-            "email": customer['email']
+            "email": customer['email'],
+            "gender": customer['gender']
         }
     })
 
@@ -225,9 +227,9 @@ def handle_bookings():
         
         if not cur_cust:
             cur_cust = query_db("""
-                INSERT INTO customers (first_name, last_name, email, phone, house_number, purok, barangay, landmark, status, id_front, id_back) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s) RETURNING customer_id
-            """, (first_name, last_name, email, data.get('phone'), data.get('houseNumber'), data.get('purok'), data.get('barangay'), data.get('landmark'), to_bytes(data.get('idFront')), to_bytes(data.get('idBack'))), one=True)
+                INSERT INTO customers (first_name, last_name, email, phone, house_number, purok, barangay, landmark, gender, status, id_front, id_back) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s) RETURNING customer_id
+            """, (first_name, last_name, email, data.get('phone'), data.get('houseNumber'), data.get('purok'), data.get('barangay'), data.get('landmark'), data.get('gender'), to_bytes(data.get('idFront')), to_bytes(data.get('idBack'))), one=True)
         
         cust_id = cur_cust['customer_id']
 
@@ -242,13 +244,14 @@ def handle_bookings():
             barangay = COALESCE(%s, barangay),
             middle_name = COALESCE(%s, middle_name),
             landmark = COALESCE(%s, landmark),
+            gender = COALESCE(%s, gender),
             id_front = COALESCE(%s, id_front),
             id_back = COALESCE(%s, id_back)
             WHERE customer_id = %s
         """, (
             first_name, last_name, data.get('phone'), data.get('houseNumber'), 
             data.get('purok'), data.get('barangay'), data.get('middleName'), data.get('landmark'), 
-            to_bytes(data.get('idFront')), to_bytes(data.get('idBack')), cust_id
+            data.get('gender'), to_bytes(data.get('idFront')), to_bytes(data.get('idBack')), cust_id
         ))
 
         # 2. Create Single Booking Header
@@ -316,9 +319,9 @@ def handle_bookings():
                 final_price = p_price
 
             query_db("""
-                INSERT INTO pets (customer_id, booking_id, pet_name, species, breed, size, age, age_unit, service_id, price) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (cust_id, booking_id, p.get('petName'), p.get('species', 'Dog'), p.get('breed'), p.get('petSize'), p.get('petAge'), p.get('petAgeUnit'), p['service_id'], final_price))
+                INSERT INTO pets (customer_id, booking_id, pet_name, pet_nickname, species, breed, size, age, age_unit, service_id, price) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (cust_id, booking_id, p.get('petName'), p.get('petNickname'), p.get('species', 'Dog'), p.get('breed'), p.get('petSize'), p.get('petAge'), p.get('petAgeUnit'), p['service_id'], final_price))
 
         # Email notification for new booking
         try:
@@ -356,7 +359,7 @@ def handle_bookings():
     rows = query_db("""
         SELECT b.*, c.first_name, c.last_name, c.middle_name, c.purok, c.landmark, c.barangay, c.house_number, c.phone, c.email,
                c.id_front, c.id_back,
-               p.pet_id, p.pet_name, p.species, p.breed, p.size as pet_size, p.age as pet_age, p.age_unit as pet_age_unit,
+               p.pet_id, p.pet_name, p.pet_nickname, p.species, p.breed, p.size as pet_size, p.age as pet_age, p.age_unit as pet_age_unit,
                s.service_name, COALESCE(p.price, s.price) as price
         FROM bookings b
         JOIN customers c ON b.customer_id = c.customer_id
@@ -386,6 +389,7 @@ def handle_bookings():
                 "barangay": r['barangay'],
                 "houseNumber": r['house_number'],
                 "landmark": r['landmark'],
+                "gender": r['gender'],
                 "date": str(r['booking_date']),
                 "time": r['booking_time'],
                 "status": r['status'],
@@ -398,6 +402,7 @@ def handle_bookings():
             bookings_map[bid]['pets'].append({
                 "id": r['pet_id'],
                 "petName": r['pet_name'],
+                "petNickname": r['pet_nickname'],
                 "species": r['species'],
                 "breed": r['breed'],
                 "petSize": r['pet_size'],
@@ -485,12 +490,12 @@ def handle_customers():
     if request.method == 'POST':
         data = request.json
         query_db("""
-            INSERT INTO customers (first_name, last_name, email, phone, house_number, purok, barangay, status, total_visits, id_front, id_back)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO customers (first_name, last_name, email, phone, house_number, purok, barangay, gender, status, total_visits, id_front, id_back)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             data.get('firstName'), data.get('lastName'), data.get('email'), data.get('phone'),
             data.get('houseNumber'), data.get('purok'),
-            data.get('barangay'), data.get('status', 'Active'), data.get('totalVisits', 0),
+            data.get('barangay'), data.get('gender'), data.get('status', 'Active'), data.get('totalVisits', 0),
             to_bytes(data.get('idFront')), to_bytes(data.get('idBack'))
         ))
         return jsonify({"success": True, "message": "Customer created"})
@@ -513,6 +518,7 @@ def handle_customers():
             "purok": c['purok'],
             "barangay": c['barangay'],
             "landmark": c['landmark'],
+            "gender": c['gender'],
             "status": c['status'],
             "lastVisit": str(c['last_visit']),
             "totalVisits": c['total_visits'],
@@ -539,6 +545,7 @@ def manage_customer(customer_id):
             "purok": c['purok'],
             "barangay": c['barangay'],
             "landmark": c['landmark'],
+            "gender": c['gender'],
             "rewardPoints": c['reward_points'],
             "rewardCode": c['reward_code'],
             "codeUsed": c['code_used'],
@@ -555,13 +562,13 @@ def manage_customer(customer_id):
         query_db("""
             UPDATE customers SET 
             first_name = %s, last_name = %s, email = %s, phone = %s, 
-            house_number = %s, purok = %s, barangay = %s, status = %s,
+            house_number = %s, purok = %s, barangay = %s, gender = %s, status = %s,
             id_front = %s, id_back = %s
             WHERE customer_id = %s
         """, (
             data.get('firstName'), data.get('lastName'), data.get('email'), data.get('phone'),
             data.get('houseNumber'), data.get('purok'),
-            data.get('barangay'), data.get('status'),
+            data.get('barangay'), data.get('gender'), data.get('status'),
             to_bytes(data.get('idFront')), to_bytes(data.get('idBack')),
             customer_id
         ))
