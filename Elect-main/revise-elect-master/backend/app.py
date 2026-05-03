@@ -96,7 +96,7 @@ def customer_login():
                 "purok": customer['purok'],
                 "barangay": customer['barangay'],
                 "landmark": customer['landmark'],
-                "gender": customer['gender'],
+                "gender": customer['gender_customer'] or customer['gender'],
                 "hasIdFront": bool(customer['id_front']),
                 "hasIdBack": bool(customer['id_back'])
             }
@@ -123,9 +123,9 @@ def customer_register():
     last_name = ' '.join(fullName.split(' ')[1:]) if fullName and ' ' in fullName else ''
 
     query_db("""
-        INSERT INTO customers (first_name, last_name, email, password, phone, gender, status, id_front, id_back) 
-        VALUES (%s, %s, %s, %s, %s, %s, 'Active', %s, %s)
-    """, (first_name, last_name, email, password, phone, data.get('gender'), to_bytes(data.get('idFront')), to_bytes(data.get('idBack'))))
+        INSERT INTO customers (first_name, last_name, email, password, phone, gender, gender_customer, status, id_front, id_back) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s)
+    """, (first_name, last_name, email, password, phone, data.get('gender'), data.get('gender'), to_bytes(data.get('idFront')), to_bytes(data.get('idBack'))))
 
     customer = query_db("SELECT * FROM customers WHERE email = %s", (email,), one=True)
     return jsonify({
@@ -137,7 +137,7 @@ def customer_register():
             "lastName": customer['last_name'],
             "fullName": f"{customer['first_name']} {customer['last_name']}".strip(),
             "email": customer['email'],
-            "gender": customer['gender']
+            "gender": customer['gender_customer'] or customer['gender']
         }
     })
 
@@ -227,9 +227,9 @@ def handle_bookings():
         
         if not cur_cust:
             cur_cust = query_db("""
-                INSERT INTO customers (first_name, last_name, email, phone, house_number, purok, barangay, landmark, gender, status, id_front, id_back) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s) RETURNING customer_id
-            """, (first_name, last_name, email, data.get('phone'), data.get('houseNumber'), data.get('purok'), data.get('barangay'), data.get('landmark'), data.get('gender'), to_bytes(data.get('idFront')), to_bytes(data.get('idBack'))), one=True)
+                INSERT INTO customers (first_name, last_name, email, phone, house_number, purok, barangay, landmark, gender, gender_customer, status, id_front, id_back) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s) RETURNING customer_id
+            """, (first_name, last_name, email, data.get('phone'), data.get('houseNumber'), data.get('purok'), data.get('barangay'), data.get('landmark'), data.get('gender'), data.get('gender'), to_bytes(data.get('idFront')), to_bytes(data.get('idBack'))), one=True)
         
         cust_id = cur_cust['customer_id']
 
@@ -245,13 +245,14 @@ def handle_bookings():
             middle_name = COALESCE(%s, middle_name),
             landmark = COALESCE(%s, landmark),
             gender = COALESCE(%s, gender),
+            gender_customer = COALESCE(%s, gender_customer),
             id_front = COALESCE(%s, id_front),
             id_back = COALESCE(%s, id_back)
             WHERE customer_id = %s
         """, (
             first_name, last_name, data.get('phone'), data.get('houseNumber'), 
             data.get('purok'), data.get('barangay'), data.get('middleName'), data.get('landmark'), 
-            data.get('gender'), to_bytes(data.get('idFront')), to_bytes(data.get('idBack')), cust_id
+            data.get('gender'), data.get('gender'), to_bytes(data.get('idFront')), to_bytes(data.get('idBack')), cust_id
         ))
 
         # 2. Create Single Booking Header
@@ -389,7 +390,7 @@ def handle_bookings():
                 "barangay": r['barangay'],
                 "houseNumber": r['house_number'],
                 "landmark": r['landmark'],
-                "gender": r['gender'],
+                "gender": r['gender_customer'] or r['gender'],
                 "date": str(r['booking_date']),
                 "time": r['booking_time'],
                 "status": r['status'],
@@ -518,7 +519,7 @@ def handle_customers():
             "purok": c['purok'],
             "barangay": c['barangay'],
             "landmark": c['landmark'],
-            "gender": c['gender'],
+            "gender": c['gender_customer'] or c['gender'],
             "status": c['status'],
             "lastVisit": str(c['last_visit']),
             "totalVisits": c['total_visits'],
@@ -545,7 +546,7 @@ def manage_customer(customer_id):
             "purok": c['purok'],
             "barangay": c['barangay'],
             "landmark": c['landmark'],
-            "gender": c['gender'],
+            "gender": c['gender_customer'] or c['gender'],
             "rewardPoints": c['reward_points'],
             "rewardCode": c['reward_code'],
             "codeUsed": c['code_used'],
@@ -562,13 +563,13 @@ def manage_customer(customer_id):
         query_db("""
             UPDATE customers SET 
             first_name = %s, last_name = %s, email = %s, phone = %s, 
-            house_number = %s, purok = %s, barangay = %s, gender = %s, status = %s,
+            house_number = %s, purok = %s, barangay = %s, gender = %s, gender_customer = %s, status = %s,
             id_front = %s, id_back = %s
             WHERE customer_id = %s
         """, (
             data.get('firstName'), data.get('lastName'), data.get('email'), data.get('phone'),
             data.get('houseNumber'), data.get('purok'),
-            data.get('barangay'), data.get('gender'), data.get('status'),
+            data.get('barangay'), data.get('gender'), data.get('gender'), data.get('status'),
             to_bytes(data.get('idFront')), to_bytes(data.get('idBack')),
             customer_id
         ))
@@ -737,42 +738,48 @@ def get_barangays():
 
 @app.route('/api/contact', methods=['POST'])
 def handle_contact():
-    import smtplib
-    from email.mime.text import MIMEText
-    from email.mime.multipart import MIMEMultipart
-
     data = request.json
     customer_id = data.get('customer_id')
     subject_input = data.get('subject', 'Contact Support Request')
+    address = data.get('address', 'N/A')
+    gender = data.get('gender', 'N/A')
     message_body = data.get('message', '')
 
-    # Fetch customer info for the email body
-    customer = query_db("SELECT * FROM customers WHERE customer_id = %s", (customer_id,), one=True)
-    customer_info = f"Customer ID: {customer_id}\n"
-    if customer:
-        customer_info += f"Name: {customer['first_name']} {customer['last_name']}\nEmail: {customer['email']}\n"
+    # Fetch customer info
+    customer = query_db("SELECT first_name, last_name, email, phone FROM customers WHERE customer_id = %s", (customer_id,), one=True)
     
-    sender_email = "alexie_chyle_magbuhat@dlsl.edu.ph"
-    sender_password = "blgd sxux hpen rrcd"
-    receiver_email = "iskomats@gmail.com"
-
-    msg = MIMEMultipart()
-    msg['From'] = sender_email
-    msg['To'] = receiver_email
-    msg['Subject'] = f"CSJ Contact Form: {subject_input}"
-
-    body = f"You have received a new message from the CSJ Pet Grooming Contact Form:\n\n{customer_info}\nSubject: {subject_input}\nMessage:\n{message_body}"
-    msg.attach(MIMEText(body, 'plain'))
-
+    # Save to database
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, receiver_email, msg.as_string())
-        return jsonify({"success": True, "message": "Email sent successfully"})
+        query_db("""
+            INSERT INTO addresses (customer_id, subject, address, gender_contacts, message)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (customer_id, subject_input, address, gender, message_body))
     except Exception as e:
-        sys.stderr.write(f"EMAIL ERROR: {e}\n")
-        return jsonify({"success": False, "message": "Failed to send email"}), 500
+        sys.stderr.write(f"DATABASE INSERT ERROR (addresses): {e}\n")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+    # Send email notification
+    try:
+        cust_name = f"{customer['first_name']} {customer['last_name']}" if customer else "Unknown"
+        cust_email = customer['email'] if customer else "N/A"
+        cust_phone = customer['phone'] if customer else "N/A"
+        
+        email_subject = f"Contact Inquiry: {subject_input}"
+        email_body = f"A new contact inquiry has been received.\n\n" \
+                     f"Customer: {cust_name}\n" \
+                     f"Email: {cust_email}\n" \
+                     f"Phone: {cust_phone}\n" \
+                     f"Address: {address}\n" \
+                     f"Gender: {gender}\n" \
+                     f"Subject: {subject_input}\n\n" \
+                     f"--- Message ---\n" \
+                     f"{message_body}\n"
+        
+        send_email(email_subject, email_body)
+    except Exception as e:
+        sys.stderr.write(f"CONTACT EMAIL ERROR: {e}\n")
+
+    return jsonify({"success": True, "message": "Message sent"})
 
 def time_to_minutes(time_str):
     try:
@@ -888,6 +895,8 @@ def verify_reward_code():
         })
     else:
         return jsonify({"success": False, "message": "Invalid or expired code"}), 400
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

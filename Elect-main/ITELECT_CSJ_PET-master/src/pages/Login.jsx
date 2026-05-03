@@ -58,7 +58,8 @@ const Login = () => {
             houseNumber: user.houseNumber,
             purok: user.purok,
             barangay: user.barangay,
-            landmark: user.landmark
+            landmark: user.landmark,
+            gender: user.gender
           }));
 
           // Use the login guard

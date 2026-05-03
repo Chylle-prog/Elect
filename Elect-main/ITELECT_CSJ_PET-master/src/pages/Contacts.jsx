@@ -12,6 +12,8 @@ const Contacts = () => {
     email: '',
     phone: '',
     subject: '',
+    address: '',
+    gender: '',
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
@@ -52,16 +54,21 @@ const Contacts = () => {
         body: JSON.stringify({
           customer_id: currentUser.id,
           subject: formData.subject,
+          address: formData.address,
+          gender: formData.gender,
           message: formData.message
         })
       });
+      
+      const data = await response.json();
+      console.log('Contact response:', data);
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         setSubmitted(true);
         setFormData(prev => ({ ...prev, subject: '', message: '' }));
         setTimeout(() => setSubmitted(false), 5000);
       } else {
-        alert('Failed to send message');
+        alert('Failed to send message: ' + (data.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -144,6 +151,14 @@ const Contacts = () => {
                       <div className="input-group full-width">
                         <label>Subject</label>
                         <input type="text" name="subject" value={formData.subject} onChange={handleChange} placeholder="How can we help?" required />
+                      </div>
+                      <div className="input-group full-width">
+                        <label>Your Address</label>
+                        <input type="text" name="address" value={formData.address} onChange={handleChange} placeholder="Enter your full address (Street, Barangay, City)" required />
+                      </div>
+                      <div className="input-group full-width">
+                        <label>Gender</label>
+                        <input type="text" name="gender" value={formData.gender} onChange={handleChange} placeholder="Enter your gender" required />
                       </div>
                       <div className="input-group full-width">
                         <label>Message</label>

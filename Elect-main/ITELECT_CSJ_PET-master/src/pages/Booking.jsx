@@ -889,41 +889,13 @@ const Booking = () => {
 
       <div className="form-group">
         <label>Gender <span className="required">*</span></label>
-        <div className="gender-selection" style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="radio"
-              name="gender"
-              value="Male"
-              checked={personalInfo.gender === 'Male'}
-              onChange={(e) => setPersonalInfo({ ...personalInfo, gender: e.target.value })}
-              style={{ width: '18px', height: '18px' }}
-            />
-            Male
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="radio"
-              name="gender"
-              value="Female"
-              checked={personalInfo.gender === 'Female'}
-              onChange={(e) => setPersonalInfo({ ...personalInfo, gender: e.target.value })}
-              style={{ width: '18px', height: '18px' }}
-            />
-            Female
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input
-              type="radio"
-              name="gender"
-              value="Other"
-              checked={personalInfo.gender === 'Other'}
-              onChange={(e) => setPersonalInfo({ ...personalInfo, gender: e.target.value })}
-              style={{ width: '18px', height: '18px' }}
-            />
-            Other
-          </label>
-        </div>
+        <input
+          type="text"
+          value={personalInfo.gender}
+          onChange={(e) => setPersonalInfo({ ...personalInfo, gender: e.target.value })}
+          className="form-control"
+          placeholder="Enter gender (e.g. Male, Female)"
+        />
         {errors.gender && <div className="error">{errors.gender}</div>}
       </div>
 

@@ -156,25 +156,15 @@ const Register = () => {
 
                             <div className="form-group">
                                 <label htmlFor="gender">Gender</label>
-                                <select
+                                <input
+                                    type="text"
                                     id="gender"
                                     name="gender"
                                     value={formData.gender}
                                     onChange={handleChange}
+                                    placeholder="Enter your gender"
                                     className={errors.gender ? 'error' : ''}
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #d9d9d9',
-                                        fontSize: '1rem'
-                                    }}
-                                >
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                />
                                 {errors.gender && <span className="error-message">{errors.gender}</span>}
                             </div>
 
